@@ -612,27 +612,40 @@
             if (e.target.classList.contains('view-incident-btn')) {
                 const materialName = e.target.dataset.materialName;
                 const materialIndex = parseInt(e.target.dataset.index);
-                const material = materials[materialIndex];
+                const material = appState.selectedShipmentData.materials[materialIndex];
                 
                 try {
-                    let incident = null;
-                    
+                    console.log('Buscando incidencia para:', {
+                        shipmentId: appState.selectedShipmentId,
+                        materialName,
+                        materialIndex
+                    });
+
                     // Intentar obtener todas las incidencias para este material
+                    const incidentsRef = collection(db, "shipments", appState.selectedShipmentId, "incidents");
                     const incidentsQuery = query(
-                        collection(db, "shipments", appState.selectedShipmentId, "incidents"),
+                        incidentsRef,
                         where("material", "==", materialName),
-                        where("materialIndex", "==", materialIndex),
-                        orderBy("reportedAt", "desc"),
-                        limit(1)
+                        where("materialIndex", "==", materialIndex)
                     );
                     
+                    console.log('Ejecutando consulta...');
                     const snapshot = await getDocs(incidentsQuery);
+                    console.log('Resultados encontrados:', snapshot.size);
                     
                     if (!snapshot.empty) {
-                        incident = {
-                            ...snapshot.docs[0].data(),
-                            id: snapshot.docs[0].id
-                        };
+                        // Ordenar por fecha de reporte (más reciente primero)
+                        const incidents = snapshot.docs.map(doc => ({
+                            ...doc.data(),
+                            id: doc.id
+                        })).sort((a, b) => {
+                            const timestampA = a.reportedAt?.toMillis() || 0;
+                            const timestampB = b.reportedAt?.toMillis() || 0;
+                            return timestampB - timestampA;
+                        });
+
+                        const incident = incidents[0];
+                        console.log('Incidencia encontrada:', incident);
                         
                         // Actualizar el material si el ID de la incidencia no coincide
                         if (material.incidentId !== incident.id) {
@@ -651,12 +664,13 @@
                         
                         // Mostrar la incidencia
                         document.getElementById('modal-title').textContent = `Novedad Reportada: ${materialName}`;
-                        document.getElementById('incident-text').value = incident.description;
+                        document.getElementById('incident-text').value = incident.description || '';
                         document.getElementById('incident-text').disabled = true;
                         document.getElementById('modal-save-btn').style.display = 'none';
                         document.getElementById('modal-cancel-btn').textContent = 'Cerrar';
                         incidentModal.classList.remove('hidden');
                     } else {
+                        console.log('No se encontraron incidencias');
                         // Si no hay incidencias, actualizar el material
                         const materials = [...appState.selectedShipmentData.materials];
                         materials[materialIndex] = {
@@ -674,7 +688,13 @@
                     }
                 } catch (error) {
                     console.error("Error al cargar la incidencia:", error);
-                    alert("Hubo un error al cargar la incidencia.");
+                    console.error("Detalles adicionales:", {
+                        shipmentId: appState.selectedShipmentId,
+                        materialName,
+                        materialIndex,
+                        material
+                    });
+                    alert("Hubo un error al cargar la incidencia. Por favor, intenta de nuevo.");
                 }
             }
         });
