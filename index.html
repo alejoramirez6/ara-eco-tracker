@@ -188,8 +188,8 @@
                     <h3 id="modal-title" class="text-lg font-bold text-gray-800 mb-4">Reportar Incidencia</h3>
                     <textarea id="incident-text" class="w-full h-32 p-3 border border-gray-300 rounded-lg" placeholder="Describe la novedad..."></textarea>
                     <div class="mt-6 flex justify-end space-x-4">
-                        <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">Cancelar</button>
-                        <button id="modal-save-btn" class="px-4 py-2 bg-orange-500 text-white font-bold rounded-lg">Guardar</button>
+                        <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancelar</button>
+                        <button id="modal-save-btn" class="px-4 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Guardar</button>
                     </div>
                 </div>
             </div>
@@ -200,7 +200,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp, getDocs, setDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA5V1pHDB9h40pfLMNi0SUOHlqVF28z9-s",
@@ -447,7 +447,18 @@
                         <div class="material-weight-input ${isWeighing ? '' : 'hidden'}"><input type="number" data-index="${index}" class="w-24 text-right p-1 border rounded weight-input" placeholder="0.00" value="${item.finalWeight || ''}"><span class="text-xs font-bold ml-1">Tn</span></div>
                     </div>
                     ${isWeighing ? `<button class="save-weight-btn ml-2 text-xs bg-green-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-600" data-index="${index}">Guardar</button>` : ''}
-                    ${isReceiving ? `<button class="item-report-btn ml-2 text-xs bg-red-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-red-600" data-material-name="${item.name}">Reportar</button>` : ''}
+                    ${isReceiving ? `
+                        <div class="flex items-center ml-2">
+                            <button class="item-report-btn text-xs ${item.hasIncident ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'} text-white font-bold py-2 px-3 rounded-lg mr-2" data-material-name="${item.name}" ${item.hasIncident ? 'disabled' : ''}>
+                                ${item.hasIncident ? 'Reportado' : 'Reportar'}
+                            </button>
+                            ${item.hasIncident ? `
+                                <button class="view-incident-btn text-xs bg-blue-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-blue-600" data-material-name="${item.name}">
+                                    Ver Novedad
+                                </button>
+                            ` : ''}
+                        </div>
+                    ` : ''}
                 </div>`).join('');
 
             const detailsContainer = document.getElementById('shipment-details-container');
@@ -465,7 +476,7 @@
             const nextStatusMap = {
                 'en-tienda': { text: 'Marcar como "En Tránsito"', status: 'en-transito', enabled: true },
                 'en-transito': { text: 'Marcar como "Recibido"', status: 'recibido', enabled: true },
-                'recibido': { text: 'Iniciar Pesaje', status: 'en-pesaje', enabled: shipment.materials.every(m => m.verified) },
+                'recibido': { text: 'Iniciar Pesaje', status: 'en-pesaje', enabled: shipment.materials.every(m => m.verified || m.hasIncident) },
                 'en-pesaje': { text: 'Finalizar Envío', status: 'finalizado', enabled: shipment.materials.every(m => typeof m.finalWeight === 'number') },
             };
             const action = nextStatusMap[shipment.status];
@@ -478,6 +489,12 @@
                 mainActionButton.disabled = true;
             }
         }
+
+        // Manejar el texto de la incidencia y habilitar/deshabilitar el botón de guardar
+        document.getElementById('incident-text').addEventListener('input', (e) => {
+            const saveButton = document.getElementById('modal-save-btn');
+            saveButton.disabled = !e.target.value.trim();
+        });
 
         async function updateShipmentStatus() {
             const nextStatus = mainActionButton.dataset.nextStatus;
@@ -513,24 +530,65 @@
                     await updateDoc(shipmentRef, { materials });
                 }
             }
-            if (e.target.classList.contains('item-report-btn')) {
+            if (e.target.classList.contains('item-report-btn') && !e.target.disabled) {
+                appState.currentIncident.materialIndex = materials.findIndex(m => m.name === e.target.dataset.materialName);
                 appState.currentIncident.materialName = e.target.dataset.materialName;
                 document.getElementById('modal-title').textContent = `Reportar Incidencia: ${appState.currentIncident.materialName}`;
+                document.getElementById('incident-text').value = '';
+                document.getElementById('modal-save-btn').disabled = true;
                 incidentModal.classList.remove('hidden');
+            }
+            if (e.target.classList.contains('view-incident-btn')) {
+                const materialName = e.target.dataset.materialName;
+                const incidentsQuery = query(collection(db, "shipments", appState.selectedShipmentId, "incidents"), 
+                    where("material", "==", materialName), 
+                    orderBy("reportedAt", "desc"), 
+                    limit(1));
+                const snapshot = await getDocs(incidentsQuery);
+                if (!snapshot.empty) {
+                    const incident = snapshot.docs[0].data();
+                    document.getElementById('modal-title').textContent = `Novedad Reportada: ${materialName}`;
+                    document.getElementById('incident-text').value = incident.description;
+                    document.getElementById('incident-text').disabled = true;
+                    document.getElementById('modal-save-btn').style.display = 'none';
+                    incidentModal.classList.remove('hidden');
+                }
             }
         });
         
         async function saveIncident() {
-            const text = document.getElementById('incident-text').value;
+            const text = document.getElementById('incident-text').value.trim();
             if (!text) return;
-            const incidentsColRef = collection(db, "shipments", appState.selectedShipmentId, "incidents");
-            await addDoc(incidentsColRef, {
-                material: appState.currentIncident.materialName,
-                description: text,
-                reportedAt: serverTimestamp()
-            });
-            incidentModal.classList.add('hidden');
-            document.getElementById('incident-text').value = '';
+
+            const materials = [...appState.selectedShipmentData.materials];
+            const materialIndex = appState.currentIncident.materialIndex;
+            
+            try {
+                const batch = writeBatch(db);
+                
+                // Guardar la incidencia
+                const incidentRef = doc(collection(db, "shipments", appState.selectedShipmentId, "incidents"));
+                batch.set(incidentRef, {
+                    material: appState.currentIncident.materialName,
+                    description: text,
+                    reportedAt: serverTimestamp()
+                });
+
+                // Actualizar el estado del material
+                materials[materialIndex].hasIncident = true;
+                const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
+                batch.update(shipmentRef, { materials });
+
+                await batch.commit();
+                
+                incidentModal.classList.add('hidden');
+                document.getElementById('incident-text').value = '';
+                document.getElementById('incident-text').disabled = false;
+                document.getElementById('modal-save-btn').style.display = 'block';
+            } catch (error) {
+                console.error("Error al guardar la incidencia:", error);
+                alert("Hubo un error al guardar la incidencia.");
+            }
         }
 
         statusFilters.addEventListener('click', e => {
@@ -545,7 +603,11 @@
         searchInput.addEventListener('input', listenToShipments);
         document.getElementById('back-to-list').addEventListener('click', () => navigate('list'));
         mainActionButton.addEventListener('click', updateShipmentStatus);
-        document.getElementById('modal-cancel-btn').addEventListener('click', () => incidentModal.classList.add('hidden'));
+        document.getElementById('modal-cancel-btn').addEventListener('click', () => {
+            incidentModal.classList.add('hidden');
+            document.getElementById('incident-text').disabled = false;
+            document.getElementById('modal-save-btn').style.display = 'block';
+        });
         document.getElementById('modal-save-btn').addEventListener('click', saveIncident);
         seedDataButton.addEventListener('click', seedDatabase);
         
@@ -571,10 +633,10 @@
             seedDataButton.textContent = 'Cargando...';
             const batch = writeBatch(db);
             const mockData = [
-                { id: 'REC-086-0001', storeCode: '086', status: 'en-tienda', vehiclePlate: 'WXY-123', driverPhone: '300 123 4567', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null }, { name: 'Plástico PET', quantity: 1, unit: 'Unidades', verified: false, finalWeight: null }] },
-                { id: 'REC-127-0001', storeCode: '127', status: 'en-tienda', vehiclePlate: 'RST-456', driverPhone: '310 987 6543', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null }] },
-                { id: 'REC-060-0001', storeCode: '060', status: 'en-transito', vehiclePlate: 'UVX-789', driverPhone: '320 111 2233', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Plástico PET', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null }] },
-                { id: 'REC-086-0002', storeCode: '086', status: 'recibido', vehiclePlate: 'ABC-111', driverPhone: '301 444 5566', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Zuncho', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null }, { name: 'Cartón Corrugado', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null }] },
+                { id: 'REC-086-0001', storeCode: '086', status: 'en-tienda', vehiclePlate: 'WXY-123', driverPhone: '300 123 4567', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false }, { name: 'Plástico PET', quantity: 1, unit: 'Unidades', verified: false, finalWeight: null, hasIncident: false }] },
+                { id: 'REC-127-0001', storeCode: '127', status: 'en-tienda', vehiclePlate: 'RST-456', driverPhone: '310 987 6543', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false }] },
+                { id: 'REC-060-0001', storeCode: '060', status: 'en-transito', vehiclePlate: 'UVX-789', driverPhone: '320 111 2233', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Plástico PET', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null, hasIncident: false }] },
+                { id: 'REC-086-0002', storeCode: '086', status: 'recibido', vehiclePlate: 'ABC-111', driverPhone: '301 444 5566', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Zuncho', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null, hasIncident: false }, { name: 'Cartón Corrugado', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false }] },
             ];
             
             mockData.forEach(shipment => {
