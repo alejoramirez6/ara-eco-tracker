@@ -1,6 +1,0 @@
-name = "ara-eco-tracker"
-compatibility_date = "2024-02-07"
-
-[pages]
-project_name = "ara-eco-tracker"
-pages_build_output_dir = "." 
