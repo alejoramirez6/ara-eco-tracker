@@ -185,7 +185,14 @@
             <!-- Modal para Incidencias -->
             <div id="incident-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
                 <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
-                    <h3 id="modal-title" class="text-lg font-bold text-gray-800 mb-4">Reportar Incidencia</h3>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 id="modal-title" class="text-lg font-bold text-gray-800"></h3>
+                        <button id="modal-close-btn" class="text-gray-400 hover:text-gray-600">
+                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                     <textarea id="incident-text" class="w-full h-32 p-3 border border-gray-300 rounded-lg" placeholder="Describe la novedad..."></textarea>
                     <div class="mt-6 flex justify-end space-x-4">
                         <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancelar</button>
@@ -217,7 +224,8 @@
 
         const appState = {
             currentView: 'role-selection', selectedShipmentId: null, selectedShipmentData: null,
-            currentStatusFilter: 'en-tienda', unsubscribe: null, currentIncident: { materialName: null },
+            currentStatusFilter: 'en-tienda', unsubscribe: null, 
+            currentIncident: { materialName: null, materialIndex: null, isViewing: false },
             charts: {}, userRole: null
         };
 
@@ -448,12 +456,12 @@
                     </div>
                     ${isWeighing ? `<button class="save-weight-btn ml-2 text-xs bg-green-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-600" data-index="${index}">Guardar</button>` : ''}
                     ${isReceiving ? `
-                        <div class="flex items-center ml-2">
-                            <button class="item-report-btn text-xs ${item.hasIncident ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'} text-white font-bold py-2 px-3 rounded-lg mr-2" data-material-name="${item.name}" ${item.hasIncident ? 'disabled' : ''}>
+                        <div class="flex items-center gap-2 ml-2">
+                            <button class="item-report-btn text-xs ${item.hasIncident ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'} text-white font-bold py-1.5 px-2 rounded-lg" data-index="${index}" data-material-name="${item.name}" ${item.hasIncident ? 'disabled' : ''}>
                                 ${item.hasIncident ? 'Reportado' : 'Reportar'}
                             </button>
                             ${item.hasIncident ? `
-                                <button class="view-incident-btn text-xs bg-blue-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-blue-600" data-material-name="${item.name}">
+                                <button class="view-incident-btn text-xs bg-blue-500 text-white font-bold py-1.5 px-2 rounded-lg hover:bg-blue-600" data-index="${index}" data-material-name="${item.name}">
                                     Ver Novedad
                                 </button>
                             ` : ''}
@@ -531,27 +539,49 @@
                 }
             }
             if (e.target.classList.contains('item-report-btn') && !e.target.disabled) {
-                appState.currentIncident.materialIndex = materials.findIndex(m => m.name === e.target.dataset.materialName);
-                appState.currentIncident.materialName = e.target.dataset.materialName;
+                appState.currentIncident = {
+                    materialIndex: parseInt(e.target.dataset.index),
+                    materialName: e.target.dataset.materialName,
+                    isViewing: false
+                };
                 document.getElementById('modal-title').textContent = `Reportar Incidencia: ${appState.currentIncident.materialName}`;
                 document.getElementById('incident-text').value = '';
+                document.getElementById('incident-text').disabled = false;
                 document.getElementById('modal-save-btn').disabled = true;
+                document.getElementById('modal-save-btn').style.display = 'block';
                 incidentModal.classList.remove('hidden');
             }
             if (e.target.classList.contains('view-incident-btn')) {
                 const materialName = e.target.dataset.materialName;
-                const incidentsQuery = query(collection(db, "shipments", appState.selectedShipmentId, "incidents"), 
-                    where("material", "==", materialName), 
-                    orderBy("reportedAt", "desc"), 
-                    limit(1));
-                const snapshot = await getDocs(incidentsQuery);
-                if (!snapshot.empty) {
-                    const incident = snapshot.docs[0].data();
-                    document.getElementById('modal-title').textContent = `Novedad Reportada: ${materialName}`;
-                    document.getElementById('incident-text').value = incident.description;
-                    document.getElementById('incident-text').disabled = true;
-                    document.getElementById('modal-save-btn').style.display = 'none';
-                    incidentModal.classList.remove('hidden');
+                const materialIndex = parseInt(e.target.dataset.index);
+                
+                try {
+                    const incidentsQuery = query(
+                        collection(db, "shipments", appState.selectedShipmentId, "incidents"),
+                        where("material", "==", materialName),
+                        orderBy("reportedAt", "desc"),
+                        limit(1)
+                    );
+                    const snapshot = await getDocs(incidentsQuery);
+                    
+                    if (!snapshot.empty) {
+                        const incident = snapshot.docs[0].data();
+                        appState.currentIncident = {
+                            materialIndex: materialIndex,
+                            materialName: materialName,
+                            isViewing: true,
+                            incidentId: snapshot.docs[0].id
+                        };
+                        
+                        document.getElementById('modal-title').textContent = `Novedad Reportada: ${materialName}`;
+                        document.getElementById('incident-text').value = incident.description;
+                        document.getElementById('incident-text').disabled = true;
+                        document.getElementById('modal-save-btn').style.display = 'none';
+                        incidentModal.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error("Error al cargar la incidencia:", error);
+                    alert("Hubo un error al cargar la incidencia.");
                 }
             }
         });
@@ -581,14 +611,19 @@
 
                 await batch.commit();
                 
-                incidentModal.classList.add('hidden');
-                document.getElementById('incident-text').value = '';
-                document.getElementById('incident-text').disabled = false;
-                document.getElementById('modal-save-btn').style.display = 'block';
+                closeIncidentModal();
             } catch (error) {
                 console.error("Error al guardar la incidencia:", error);
                 alert("Hubo un error al guardar la incidencia.");
             }
+        }
+
+        function closeIncidentModal() {
+            incidentModal.classList.add('hidden');
+            document.getElementById('incident-text').disabled = false;
+            document.getElementById('incident-text').value = '';
+            document.getElementById('modal-save-btn').style.display = 'block';
+            appState.currentIncident = { materialName: null, materialIndex: null, isViewing: false };
         }
 
         statusFilters.addEventListener('click', e => {
@@ -603,11 +638,8 @@
         searchInput.addEventListener('input', listenToShipments);
         document.getElementById('back-to-list').addEventListener('click', () => navigate('list'));
         mainActionButton.addEventListener('click', updateShipmentStatus);
-        document.getElementById('modal-cancel-btn').addEventListener('click', () => {
-            incidentModal.classList.add('hidden');
-            document.getElementById('incident-text').disabled = false;
-            document.getElementById('modal-save-btn').style.display = 'block';
-        });
+        document.getElementById('modal-cancel-btn').addEventListener('click', closeIncidentModal);
+        document.getElementById('modal-close-btn').addEventListener('click', closeIncidentModal);
         document.getElementById('modal-save-btn').addEventListener('click', saveIncident);
         seedDataButton.addEventListener('click', seedDatabase);
         
