@@ -303,9 +303,15 @@
             materialDiv.innerHTML = `
                 <select class="material-name-select flex-grow p-1 border-r" name="materialName">
                     <option value="">Tipo de material</option>
-                    <option value="Cartón Corrugado">Cartón Corrugado</option>
-                    <option value="Plástico PET">Plástico PET</option>
-                    <option value="Zuncho">Zuncho</option>
+                    <optgroup label="Aprovechable">
+                        <option value="Plástico">Plástico</option>
+                        <option value="Cartón">Cartón</option>
+                    </optgroup>
+                    <optgroup label="No Aprovechable">
+                        <option value="Icopor">Icopor</option>
+                        <option value="Vidrio">Vidrio</option>
+                        <option value="Orgánico">Orgánico</option>
+                    </optgroup>
                 </select>
                 <input type="number" name="quantity" class="w-20 p-1" placeholder="Cant.">
                  <select class="material-unit-select w-24 p-1 border-l" name="materialUnit">
