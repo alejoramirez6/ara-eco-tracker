@@ -20,8 +20,7 @@
             overflow: hidden; display: flex; flex-direction: column;
         }
         .w-32 {
-            width: 23rem;
-            padding-left: 42px;
+            width: 20rem;
         }
         .connector { position: absolute; top: calc(1.5rem - 2px); left: 1.5rem; right: 1.5rem; height: 4px; background-color: #e5e7eb; z-index: 0; }
         .connector-progress { height: 100%; background-color: #f97316; width: 0%; transition: width 0.5s ease-in-out; border-radius: 9999px; }
@@ -36,6 +35,12 @@
         .step-container { display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 10; width: 25%; }
         .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #f97316; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .logo {
+            width: 25rem;
+            height: auto;
+            margin: 2rem auto;
+            display: block;
+        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -207,7 +212,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp, getDocs, setDoc, orderBy, limit } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp, getDocs, setDoc, orderBy, limit, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA5V1pHDB9h40pfLMNi0SUOHlqVF28z9-s",
@@ -447,26 +452,37 @@
             const isWeighing = shipment.status === 'en-pesaje';
 
             materialListContainer.innerHTML = shipment.materials.map((item, index) => `
-                <div class="material-card flex items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
+                <div class="material-card flex flex-wrap items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
                     ${isReceiving ? `<div class="mr-4"><input type="checkbox" data-index="${index}" class="custom-checkbox reception-checkbox" ${item.verified ? 'checked' : ''}></div>` : ''}
-                    <div class="flex-grow"><p class="font-semibold text-gray-800">${item.name}</p></div>
-                    <div class="text-right ml-4">
-                        <p class="material-qty font-bold text-lg text-gray-800 ${isWeighing ? 'hidden' : ''}">${item.quantity} ${item.unit}</p>
-                        <div class="material-weight-input ${isWeighing ? '' : 'hidden'}"><input type="number" data-index="${index}" class="w-24 text-right p-1 border rounded weight-input" placeholder="0.00" value="${item.finalWeight || ''}"><span class="text-xs font-bold ml-1">Tn</span></div>
+                    <div class="flex-grow min-w-[120px]">
+                        <p class="font-semibold text-gray-800">${item.name}</p>
                     </div>
-                    ${isWeighing ? `<button class="save-weight-btn ml-2 text-xs bg-green-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-600" data-index="${index}">Guardar</button>` : ''}
-                    ${isReceiving ? `
-                        <div class="flex items-center gap-2 ml-2">
-                            <button class="item-report-btn text-xs ${item.hasIncident ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'} text-white font-bold py-1.5 px-2 rounded-lg" data-index="${index}" data-material-name="${item.name}" ${item.hasIncident ? 'disabled' : ''}>
-                                ${item.hasIncident ? 'Reportado' : 'Reportar'}
-                            </button>
-                            ${item.hasIncident ? `
-                                <button class="view-incident-btn text-xs bg-blue-500 text-white font-bold py-1.5 px-2 rounded-lg hover:bg-blue-600" data-index="${index}" data-material-name="${item.name}">
-                                    Ver Novedad
-                                </button>
-                            ` : ''}
+                    <div class="flex items-center">
+                        <div class="text-right">
+                            <p class="material-qty font-bold text-lg text-gray-800 ${isWeighing ? 'hidden' : ''}">${item.quantity} ${item.unit}</p>
+                            <div class="material-weight-input ${isWeighing ? '' : 'hidden'}">
+                                <input type="number" data-index="${index}" class="w-24 text-right p-1 border rounded weight-input" placeholder="0.00" value="${item.finalWeight || ''}">
+                                <span class="text-xs font-bold ml-1">Tn</span>
+                            </div>
                         </div>
-                    ` : ''}
+                        ${isWeighing ? `
+                            <button class="save-weight-btn ml-2 text-xs bg-green-500 text-white font-bold py-1.5 px-2 rounded-lg hover:bg-green-600" data-index="${index}">
+                                Guardar
+                            </button>
+                        ` : ''}
+                        ${isReceiving ? `
+                            <div class="flex items-center ml-2 space-x-1">
+                                <button class="item-report-btn text-xs whitespace-nowrap ${item.hasIncident ? 'bg-gray-400' : 'bg-red-500 hover:bg-red-600'} text-white font-bold py-1.5 px-2 rounded-lg" data-index="${index}" data-material-name="${item.name}" ${item.hasIncident ? 'disabled' : ''}>
+                                    ${item.hasIncident ? 'Reportado' : 'Reportar'}
+                                </button>
+                                ${item.hasIncident ? `
+                                    <button class="view-incident-btn text-xs whitespace-nowrap bg-blue-500 text-white font-bold py-1.5 px-2 rounded-lg hover:bg-blue-600" data-index="${index}" data-material-name="${item.name}">
+                                        Ver Novedad
+                                    </button>
+                                ` : ''}
+                            </div>
+                        ` : ''}
+                    </div>
                 </div>`).join('');
 
             const detailsContainer = document.getElementById('shipment-details-container');
@@ -521,6 +537,47 @@
             }
         }
 
+        async function saveIncident() {
+            const text = document.getElementById('incident-text').value.trim();
+            if (!text) return;
+
+            const materials = [...appState.selectedShipmentData.materials];
+            const materialIndex = appState.currentIncident.materialIndex;
+            
+            try {
+                const batch = writeBatch(db);
+                
+                // Crear referencia para la nueva incidencia
+                const incidentRef = doc(collection(db, "shipments", appState.selectedShipmentId, "incidents"));
+                const incidentData = {
+                    material: appState.currentIncident.materialName,
+                    description: text,
+                    reportedAt: serverTimestamp(),
+                    materialIndex: materialIndex // Guardamos el índice del material
+                };
+
+                // Guardar la incidencia
+                batch.set(incidentRef, incidentData);
+
+                // Actualizar el estado del material
+                materials[materialIndex] = {
+                    ...materials[materialIndex],
+                    hasIncident: true,
+                    incidentId: incidentRef.id
+                };
+
+                // Actualizar el envío
+                const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
+                batch.update(shipmentRef, { materials });
+
+                await batch.commit();
+                closeIncidentModal();
+            } catch (error) {
+                console.error("Error al guardar la incidencia:", error);
+                alert("Hubo un error al guardar la incidencia.");
+            }
+        }
+
         materialListContainer.addEventListener('click', async e => {
             const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
             let materials = [...appState.selectedShipmentData.materials];
@@ -549,35 +606,71 @@
                 document.getElementById('incident-text').disabled = false;
                 document.getElementById('modal-save-btn').disabled = true;
                 document.getElementById('modal-save-btn').style.display = 'block';
+                document.getElementById('modal-cancel-btn').style.display = 'block';
                 incidentModal.classList.remove('hidden');
             }
             if (e.target.classList.contains('view-incident-btn')) {
                 const materialName = e.target.dataset.materialName;
                 const materialIndex = parseInt(e.target.dataset.index);
+                const material = materials[materialIndex];
                 
                 try {
+                    let incident = null;
+                    
+                    // Intentar obtener todas las incidencias para este material
                     const incidentsQuery = query(
                         collection(db, "shipments", appState.selectedShipmentId, "incidents"),
                         where("material", "==", materialName),
+                        where("materialIndex", "==", materialIndex),
                         orderBy("reportedAt", "desc"),
                         limit(1)
                     );
+                    
                     const snapshot = await getDocs(incidentsQuery);
                     
                     if (!snapshot.empty) {
-                        const incident = snapshot.docs[0].data();
-                        appState.currentIncident = {
-                            materialIndex: materialIndex,
-                            materialName: materialName,
-                            isViewing: true,
-                            incidentId: snapshot.docs[0].id
+                        incident = {
+                            ...snapshot.docs[0].data(),
+                            id: snapshot.docs[0].id
                         };
                         
+                        // Actualizar el material si el ID de la incidencia no coincide
+                        if (material.incidentId !== incident.id) {
+                            const materials = [...appState.selectedShipmentData.materials];
+                            materials[materialIndex] = {
+                                ...materials[materialIndex],
+                                hasIncident: true,
+                                incidentId: incident.id
+                            };
+                            
+                            await updateDoc(
+                                doc(db, "shipments", appState.selectedShipmentId),
+                                { materials }
+                            );
+                        }
+                        
+                        // Mostrar la incidencia
                         document.getElementById('modal-title').textContent = `Novedad Reportada: ${materialName}`;
                         document.getElementById('incident-text').value = incident.description;
                         document.getElementById('incident-text').disabled = true;
                         document.getElementById('modal-save-btn').style.display = 'none';
+                        document.getElementById('modal-cancel-btn').textContent = 'Cerrar';
                         incidentModal.classList.remove('hidden');
+                    } else {
+                        // Si no hay incidencias, actualizar el material
+                        const materials = [...appState.selectedShipmentData.materials];
+                        materials[materialIndex] = {
+                            ...materials[materialIndex],
+                            hasIncident: false,
+                            incidentId: null
+                        };
+                        
+                        await updateDoc(
+                            doc(db, "shipments", appState.selectedShipmentId),
+                            { materials }
+                        );
+                        
+                        alert("No se encontró ninguna incidencia para este material.");
                     }
                 } catch (error) {
                     console.error("Error al cargar la incidencia:", error);
@@ -585,44 +678,14 @@
                 }
             }
         });
-        
-        async function saveIncident() {
-            const text = document.getElementById('incident-text').value.trim();
-            if (!text) return;
-
-            const materials = [...appState.selectedShipmentData.materials];
-            const materialIndex = appState.currentIncident.materialIndex;
-            
-            try {
-                const batch = writeBatch(db);
-                
-                // Guardar la incidencia
-                const incidentRef = doc(collection(db, "shipments", appState.selectedShipmentId, "incidents"));
-                batch.set(incidentRef, {
-                    material: appState.currentIncident.materialName,
-                    description: text,
-                    reportedAt: serverTimestamp()
-                });
-
-                // Actualizar el estado del material
-                materials[materialIndex].hasIncident = true;
-                const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
-                batch.update(shipmentRef, { materials });
-
-                await batch.commit();
-                
-                closeIncidentModal();
-            } catch (error) {
-                console.error("Error al guardar la incidencia:", error);
-                alert("Hubo un error al guardar la incidencia.");
-            }
-        }
 
         function closeIncidentModal() {
             incidentModal.classList.add('hidden');
             document.getElementById('incident-text').disabled = false;
             document.getElementById('incident-text').value = '';
             document.getElementById('modal-save-btn').style.display = 'block';
+            document.getElementById('modal-cancel-btn').textContent = 'Cancelar';
+            document.getElementById('modal-cancel-btn').style.display = 'block';
             appState.currentIncident = { materialName: null, materialIndex: null, isViewing: false };
         }
 
@@ -665,10 +728,52 @@
             seedDataButton.textContent = 'Cargando...';
             const batch = writeBatch(db);
             const mockData = [
-                { id: 'REC-086-0001', storeCode: '086', status: 'en-tienda', vehiclePlate: 'WXY-123', driverPhone: '300 123 4567', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false }, { name: 'Plástico PET', quantity: 1, unit: 'Unidades', verified: false, finalWeight: null, hasIncident: false }] },
-                { id: 'REC-127-0001', storeCode: '127', status: 'en-tienda', vehiclePlate: 'RST-456', driverPhone: '310 987 6543', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false }] },
-                { id: 'REC-060-0001', storeCode: '060', status: 'en-transito', vehiclePlate: 'UVX-789', driverPhone: '320 111 2233', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Plástico PET', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null, hasIncident: false }] },
-                { id: 'REC-086-0002', storeCode: '086', status: 'recibido', vehiclePlate: 'ABC-111', driverPhone: '301 444 5566', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Zuncho', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null, hasIncident: false }, { name: 'Cartón Corrugado', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false }] },
+                { 
+                    id: 'REC-086-0001', 
+                    storeCode: '086', 
+                    status: 'en-tienda', 
+                    vehiclePlate: 'WXY-123', 
+                    driverPhone: '300 123 4567', 
+                    dispatchTimestamp: Timestamp.fromDate(new Date()), 
+                    materials: [
+                        { name: 'Cartón Corrugado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false, incidentId: null }, 
+                        { name: 'Plástico PET', quantity: 1, unit: 'Unidades', verified: false, finalWeight: null, hasIncident: false, incidentId: null }
+                    ] 
+                },
+                { 
+                    id: 'REC-127-0001', 
+                    storeCode: '127', 
+                    status: 'en-tienda', 
+                    vehiclePlate: 'RST-456', 
+                    driverPhone: '310 987 6543', 
+                    dispatchTimestamp: Timestamp.fromDate(new Date()), 
+                    materials: [
+                        { name: 'Cartón Corrugado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false, incidentId: null }
+                    ] 
+                },
+                { 
+                    id: 'REC-060-0001', 
+                    storeCode: '060', 
+                    status: 'en-transito', 
+                    vehiclePlate: 'UVX-789', 
+                    driverPhone: '320 111 2233', 
+                    dispatchTimestamp: Timestamp.fromDate(new Date()), 
+                    materials: [
+                        { name: 'Plástico PET', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null, hasIncident: false, incidentId: null }
+                    ] 
+                },
+                { 
+                    id: 'REC-086-0002', 
+                    storeCode: '086', 
+                    status: 'recibido', 
+                    vehiclePlate: 'ABC-111', 
+                    driverPhone: '301 444 5566', 
+                    dispatchTimestamp: Timestamp.fromDate(new Date()), 
+                    materials: [
+                        { name: 'Zuncho', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null, hasIncident: false, incidentId: null }, 
+                        { name: 'Cartón Corrugado', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null, hasIncident: false, incidentId: null }
+                    ] 
+                }
             ];
             
             mockData.forEach(shipment => {
@@ -679,7 +784,11 @@
             try {
                 await batch.commit();
                 seedDataButton.textContent = '¡Datos cargados!';
-            } catch (e) { console.error("Error seeding: ", e); seedDataButton.disabled = false; seedDataButton.textContent = 'Cargar datos de prueba'; }
+            } catch (e) { 
+                console.error("Error seeding: ", e); 
+                seedDataButton.disabled = false; 
+                seedDataButton.textContent = 'Cargar datos de prueba'; 
+            }
         }
     </script>
 </body>
