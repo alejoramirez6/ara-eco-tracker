@@ -1,0 +1,8 @@
+{
+  "name": "ara-eco-tracker",
+  "version": "1.0.0",
+  "description": "Aplicación web para el seguimiento y gestión de envíos de materiales reciclables en tiendas Ara",
+  "scripts": {
+    "build": "echo 'No build step needed'"
+  }
+} 
