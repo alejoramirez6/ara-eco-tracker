@@ -1,0 +1,5 @@
+name = "ara-eco-tracker"
+compatibility_date = "2024-02-07"
+
+[site]
+bucket = "./" 
