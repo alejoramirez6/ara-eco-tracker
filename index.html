@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ara Eco-Tracker con Firebase</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .mobile-shell {
+            width: 100%; max-width: 440px; height: 956px; margin: 2rem auto;
+            border: 12px solid #1f2937; border-radius: 40px;
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        .connector { position: absolute; top: calc(1.5rem - 2px); left: 1.5rem; right: 1.5rem; height: 4px; background-color: #e5e7eb; z-index: 0; }
+        .connector-progress { height: 100%; background-color: #f97316; width: 0%; transition: width 0.5s ease-in-out; border-radius: 9999px; }
+        .custom-checkbox { appearance: none; background-color: #fff; border: 2px solid #d1d5db; width: 1.5rem; height: 1.5rem; border-radius: 0.375rem; display: inline-block; position: relative; cursor: pointer; }
+        .custom-checkbox:checked { background-color: #f97316; border-color: #f97316; }
+        .custom-checkbox:checked::after { content: ''; position: absolute; left: 0.45rem; top: 0.2rem; width: 0.5rem; height: 0.9rem; border: solid white; border-width: 0 3px 3px 0; transform: rotate(45deg); }
+        #incident-modal, #menu-dropdown { transition: opacity 0.3s ease; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a1a1aa; }
+        .step-container { display: flex; flex-direction: column; align-items: center; text-align: center; z-index: 10; width: 25%; }
+        .loader { border: 4px solid #f3f3f3; border-radius: 50%; border-top: 4px solid #f97316; width: 40px; height: 40px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+
+    <div class="mobile-shell">
+        <div id="app-container" class="flex-grow flex flex-col bg-white relative">
+
+            <!-- VISTA DE LISTA DE ENVÍOS -->
+            <div id="shipment-list-view" class="flex flex-col flex-grow">
+                 <header class="flex items-center justify-between mb-4 p-6 border-b">
+                     <div class="w-8 h-8"></div>
+                     <h1 class="text-2xl font-bold text-gray-800">CÚCUTA</h1>
+                     <div class="w-8 h-8"></div>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                    <div class="flex items-center border border-gray-300 rounded-lg p-2 mb-6">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 mr-2" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" /></svg>
+                        <input type="text" id="search-shipment" class="w-full focus:outline-none" placeholder="Buscar envío por ID...">
+                    </div>
+                    <div id="status-filters" class="flex justify-around mb-6 bg-gray-100 rounded-lg p-1">
+                        <button class="status-filter-btn flex-1 py-2 px-4 text-sm font-semibold rounded-md bg-orange-500 text-white" data-status="en-tienda">En Tienda</button>
+                        <button class="status-filter-btn flex-1 py-2 px-4 text-sm font-semibold text-gray-600" data-status="en-transito">En Tránsito</button>
+                        <button class="status-filter-btn flex-1 py-2 px-4 text-sm font-semibold text-gray-600" data-status="recibido">Recibido</button>
+                        <button class="status-filter-btn flex-1 py-2 px-4 text-sm font-semibold text-gray-600" data-status="en-pesaje">En Pesaje</button>
+                    </div>
+                    <div id="shipments-container" class="space-y-3"></div>
+                    <div id="loading-indicator" class="hidden justify-center items-center py-8"><div class="loader"></div></div>
+                    <div id="no-data-message" class="hidden text-center py-8">
+                        <p class="text-gray-500 mb-4">No hay envíos en esta categoría.</p>
+                        <button id="seed-data-button" class="bg-green-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-green-600">Cargar datos de prueba</button>
+                    </div>
+                </main>
+            </div>
+
+            <!-- VISTA DE SEGUIMIENTO (TRACKER) -->
+            <div id="tracker-view" class="hidden flex flex-col flex-grow">
+                <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                    <header class="flex items-center justify-between mb-8">
+                         <div class="w-8 h-8">
+                            <svg id="back-to-list" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg>
+                         </div>
+                         <h1 id="tracker-title" class="text-xl font-bold text-gray-800"></h1>
+                         <div class="w-8 h-8 relative">
+                            <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
+                            <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
+                                <a href="#" id="admin-role-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rol Administrador</a>
+                            </div>
+                         </div>
+                    </header>
+                    <!-- Stepper -->
+                    <div class="relative w-full mb-12">
+                        <div class="connector"><div id="progress-bar" class="connector-progress"></div></div>
+                        <div class="relative flex justify-between items-start">
+                           <div class="step-container"><div id="step-1" class="step-icon"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg></div><p id="step-1-text" class="step-text">En Origen</p></div>
+                           <div class="step-container"><div id="step-2" class="step-icon"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1z"/><path d="M18 18h1a1 1 0 001-1v-6a1 1 0 00-1-1h-1l-3-4H9"/></svg></div><p id="step-2-text" class="step-text">En Tránsito</p></div>
+                           <div class="step-container"><div id="step-3" class="step-icon"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/></svg></div><p id="step-3-text" class="step-text">Recibido</p></div>
+                           <div class="step-container"><div id="step-4" class="step-icon"><svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3"/></svg></div><p id="step-4-text" class="step-text">En Pesaje</p></div>
+                        </div>
+                    </div>
+                    <div class="mb-8">
+                        <h2 class="font-bold text-lg text-gray-800 mb-4">Contenido del Envío</h2>
+                        <div id="material-list" class="space-y-4"></div>
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg text-gray-800 mb-4">Detalles del Envío</h2>
+                        <div id="shipment-details-container" class="bg-gray-50 rounded-xl p-4 border border-gray-200 space-y-4"></div>
+                    </div>
+                </main>
+                <footer class="p-6 mt-auto">
+                    <button id="main-action-button" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-orange-500/50 hover:bg-orange-600 focus:outline-none focus:ring-4 focus:ring-orange-300 transition-all duration-300 disabled:bg-gray-400 disabled:shadow-none"></button>
+                </footer>
+            </div>
+            
+            <!-- VISTA DE DASHBOARD -->
+            <div id="dashboard-view" class="hidden flex-grow flex flex-col">
+                <header class="flex items-center justify-between mb-6 p-6 border-b">
+                     <div class="w-8 h-8"><svg id="back-to-tracker-from-dash" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
+                     <h1 class="text-xl font-bold text-orange-500">Dashboard Administrador</h1>
+                     <div class="w-8 h-8"></div>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                    <div class="flex flex-col sm:flex-row gap-4 mb-6"><select id="period-select" class="w-full sm:w-1/3 p-2 border rounded-md shadow-sm"><option value="quarterly">Último Trimestre</option><option value="semi-annually">Último Semestre</option><option value="custom">Personalizado</option></select><input id="date-range-picker" type="text" class="w-full sm:w-2/3 p-2 border rounded-md shadow-sm hidden" placeholder="Seleccione un rango de fechas"></div>
+                    <h3 class="text-lg font-bold text-gray-700 mb-2">Acumulado Enero-Marzo 2025</h3>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 mb-8"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tienda</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plástico (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cartón (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-4 py-2 text-sm">Cúcuta Los Ángeles</td><td class="px-4 py-2 text-sm">159</td><td class="px-4 py-2 text-sm">6</td><td class="px-4 py-2 text-sm font-bold">165</td></tr><tr class="bg-gray-50"><td class="px-4 py-2 text-sm">Cúcuta Guaimaral</td><td class="px-4 py-2 text-sm">237</td><td class="px-4 py-2 text-sm">9</td><td class="px-4 py-2 text-sm font-bold">246</td></tr><tr><td class="px-4 py-2 text-sm">Cúcuta Libertadores</td><td class="px-4 py-2 text-sm">262</td><td class="px-4 py-2 text-sm">16</td><td class="px-4 py-2 text-sm font-bold">278</td></tr></tbody></table></div>
+                    <div class="grid grid-cols-1 gap-8"><div><h3 class="font-semibold mb-2">Cartón acumulado (últimos 6 meses)</h3><canvas id="carton-chart"></canvas></div><div><h3 class="font-semibold mb-2">Material acumulado</h3><canvas id="material-chart"></canvas></div><div><h3 class="font-semibold mb-2">Ciudad acumulado (Cúcuta vs Gachancipá)</h3><canvas id="city-chart"></canvas></div></div>
+                </main>
+            </div>
+
+            <!-- Modal para Incidencias -->
+            <div id="incident-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+                <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-sm">
+                    <h3 id="modal-title" class="text-lg font-bold text-gray-800 mb-4">Reportar Incidencia</h3>
+                    <textarea id="incident-text" class="w-full h-32 p-3 border border-gray-300 rounded-lg" placeholder="Describe la novedad..."></textarea>
+                    <div class="mt-6 flex justify-end space-x-4">
+                        <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">Cancelar</button>
+                        <button id="modal-save-btn" class="px-4 py-2 bg-orange-500 text-white font-bold rounded-lg">Guardar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5V1pHDB9h40pfLMNi0SUOHlqVF28z9-s",
+            authDomain: "ara-eco-tracker.firebaseapp.com",
+            projectId: "ara-eco-tracker",
+            storageBucket: "ara-eco-tracker.appspot.com",
+            messagingSenderId: "884562458055",
+            appId: "1:884562458055:web:15b83e877b95eac85315e2",
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        const appState = {
+            currentView: 'list', selectedShipmentId: null, selectedShipmentData: null,
+            currentStatusFilter: 'en-tienda', unsubscribe: null, currentIncident: { materialName: null },
+            charts: {}
+        };
+
+        const views = { 
+            list: document.getElementById('shipment-list-view'), 
+            tracker: document.getElementById('tracker-view'),
+            dashboard: document.getElementById('dashboard-view')
+        };
+        const shipmentsContainer = document.getElementById('shipments-container');
+        const searchInput = document.getElementById('search-shipment');
+        const statusFilters = document.getElementById('status-filters');
+        const mainActionButton = document.getElementById('main-action-button');
+        const loadingIndicator = document.getElementById('loading-indicator');
+        const noDataMessage = document.getElementById('no-data-message');
+        const seedDataButton = document.getElementById('seed-data-button');
+        const incidentModal = document.getElementById('incident-modal');
+        const materialListContainer = document.getElementById('material-list');
+        const menuIcon = document.getElementById('menu-icon');
+        const menuDropdown = document.getElementById('menu-dropdown');
+        const adminRoleButton = document.getElementById('admin-role-button');
+        const backToTrackerFromDash = document.getElementById('back-to-tracker-from-dash');
+
+
+        function navigate(view) {
+            appState.currentView = view;
+            Object.values(views).forEach(v => v.classList.add('hidden'));
+            views[view].classList.remove('hidden');
+            
+            if (appState.unsubscribe) { appState.unsubscribe(); appState.unsubscribe = null; }
+
+            if (view === 'list') {
+                listenToShipments();
+            } else if (view === 'tracker') {
+                if (!appState.selectedShipmentId) navigate('list');
+                else listenToSingleShipment();
+            } else if (view === 'dashboard') {
+                initializeDashboard();
+            }
+        }
+
+        onAuthStateChanged(auth, user => {
+            if (user) { navigate('list'); } 
+            else { signInAnonymously(auth).catch(e => console.error("Sign-in failed:", e)); }
+        });
+
+        function listenToShipments() {
+            loadingIndicator.classList.remove('hidden');
+            noDataMessage.classList.add('hidden');
+            shipmentsContainer.innerHTML = '';
+
+            const q = query(collection(db, "shipments"), where("status", "==", appState.currentStatusFilter));
+            appState.unsubscribe = onSnapshot(q, snap => {
+                loadingIndicator.classList.add('hidden');
+                const shipments = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderShipmentList(shipments);
+                noDataMessage.classList.toggle('hidden', shipments.length > 0);
+            }, e => console.error("Error listening:", e));
+        }
+
+        function renderShipmentList(shipments) {
+            const searchTerm = searchInput.value.toLowerCase();
+            shipmentsContainer.innerHTML = shipments
+                .filter(s => s.id.toLowerCase().includes(searchTerm))
+                .map(shipment => `<button data-shipment-id='${shipment.id}' class='shipment-btn w-full text-left p-4 bg-orange-500 text-white font-bold rounded-lg shadow hover:bg-orange-600'>${shipment.id}</button>`)
+                .join('');
+        }
+
+        shipmentsContainer.addEventListener('click', e => {
+            if (e.target.classList.contains('shipment-btn')) {
+                appState.selectedShipmentId = e.target.dataset.shipmentId;
+                navigate('tracker');
+            }
+        });
+
+        function listenToSingleShipment() {
+            if (appState.unsubscribe) appState.unsubscribe();
+            const docRef = doc(db, "shipments", appState.selectedShipmentId);
+            appState.unsubscribe = onSnapshot(docRef, (doc) => {
+                if (doc.exists()) {
+                    appState.selectedShipmentData = { id: doc.id, ...doc.data() };
+                    renderTrackerView();
+                } else {
+                    console.error("Shipment not found!");
+                    navigate('list');
+                }
+            });
+        }
+
+        function renderTrackerView() {
+            const shipment = appState.selectedShipmentData;
+            if (!shipment) return;
+
+            const statusMap = { 'en-tienda': 1, 'en-transito': 2, 'recibido': 3, 'en-pesaje': 4, 'finalizado': 5 };
+            const currentStep = statusMap[shipment.status] || 1;
+            const totalSteps = 4;
+
+            document.getElementById('tracker-title').textContent = `Envío: ${shipment.id}`;
+            document.getElementById('progress-bar').style.width = `${((currentStep - 1) / totalSteps) * 100}%`;
+            
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepIcon = document.getElementById(`step-${i}`);
+                const isActive = i <= currentStep;
+                stepIcon.className = `step-icon w-12 h-12 rounded-full flex items-center justify-center border-4 border-white shadow ${isActive ? 'bg-orange-500 text-white' : 'bg-gray-300 text-gray-500'}`;
+                document.getElementById(`step-${i}-text`).className = `step-text mt-2 text-xs font-semibold ${isActive ? 'text-orange-500' : 'text-gray-600'}`;
+            }
+
+            const isReceiving = shipment.status === 'recibido';
+            const isWeighing = shipment.status === 'en-pesaje';
+
+            materialListContainer.innerHTML = shipment.materials.map((item, index) => `
+                <div class="material-card flex items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
+                    ${isReceiving ? `<div class="mr-4"><input type="checkbox" data-index="${index}" class="custom-checkbox reception-checkbox" ${item.verified ? 'checked' : ''}></div>` : ''}
+                    <div class="flex-grow"><p class="font-semibold text-gray-800">${item.name}</p><p class="text-sm text-gray-500">${item.type}</p></div>
+                    <div class="text-right ml-4">
+                        <p class="material-qty font-bold text-lg text-gray-800 ${isWeighing ? 'hidden' : ''}">${item.quantity} ${item.unit}</p>
+                        <div class="material-weight-input ${isWeighing ? '' : 'hidden'}"><input type="number" data-index="${index}" class="w-24 text-right p-1 border rounded weight-input" placeholder="0.00" value="${item.finalWeight || ''}"><span class="text-xs font-bold ml-1">Tn</span></div>
+                    </div>
+                    ${isWeighing ? `<button class="save-weight-btn ml-2 text-xs bg-green-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-green-600" data-index="${index}">Guardar</button>` : ''}
+                    ${isReceiving ? `<button class="item-report-btn ml-2 text-xs bg-red-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-red-600" data-material-name="${item.name}">Reportar</button>` : ''}
+                </div>`).join('');
+
+            const detailsContainer = document.getElementById('shipment-details-container');
+            detailsContainer.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1z"/><path d="M18 18h1a1 1 0 001-1v-6a1 1 0 00-1-1h-1l-3-4H9"/></svg>
+                    </div>
+                    <div class="flex-grow">
+                        <p class="text-sm text-gray-500">Placa del Vehículo</p>
+                        <p class="font-semibold text-gray-800">${shipment.vehiclePlate}</p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.76a11.034 11.034 0 006.364 6.364l.76-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
+                    </div>
+                    <div class="flex-grow">
+                        <p class="text-sm text-gray-500">Celular del Conductor</p>
+                        <p class="font-semibold text-gray-800">${shipment.driverPhone}</p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                    </div>
+                    <div class="flex-grow">
+                        <p class="text-sm text-gray-500">Fecha y Hora de Envío</p>
+                        <p class="font-semibold text-gray-800">${shipment.dispatchTimestamp ? new Date(shipment.dispatchTimestamp.seconds * 1000).toLocaleString('es-CO') : 'N/A'}</p>
+                    </div>
+                </div>`;
+
+            updateMainActionButton();
+        }
+
+        function updateMainActionButton() {
+            const shipment = appState.selectedShipmentData;
+            if (!shipment) return;
+            const nextStatusMap = {
+                'en-tienda': { text: 'Marcar como "En Tránsito"', status: 'en-transito', enabled: true },
+                'en-transito': { text: 'Marcar como "Recibido"', status: 'recibido', enabled: true },
+                'recibido': { text: 'Iniciar Pesaje', status: 'en-pesaje', enabled: shipment.materials.every(m => m.verified) },
+                'en-pesaje': { text: 'Finalizar Envío', status: 'finalizado', enabled: shipment.materials.every(m => typeof m.finalWeight === 'number') },
+            };
+            const action = nextStatusMap[shipment.status];
+            if (action) {
+                mainActionButton.textContent = action.text;
+                mainActionButton.dataset.nextStatus = action.status;
+                mainActionButton.disabled = !action.enabled;
+            } else {
+                mainActionButton.textContent = 'Envío Finalizado';
+                mainActionButton.disabled = true;
+            }
+        }
+
+        async function updateShipmentStatus() {
+            const nextStatus = mainActionButton.dataset.nextStatus;
+            if (!nextStatus || !appState.selectedShipmentId) return;
+            
+            mainActionButton.disabled = true;
+            mainActionButton.textContent = 'Actualizando...';
+
+            const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
+            try {
+                await updateDoc(shipmentRef, { status: nextStatus });
+                if (nextStatus === 'finalizado') {
+                    navigate('list');
+                }
+            } catch (error) {
+                console.error("Error updating shipment status: ", error);
+                updateMainActionButton();
+            }
+        }
+
+        materialListContainer.addEventListener('click', async e => {
+            const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
+            let materials = [...appState.selectedShipmentData.materials];
+            
+            if (e.target.classList.contains('reception-checkbox')) {
+                const index = e.target.dataset.index;
+                materials[index].verified = e.target.checked;
+                await updateDoc(shipmentRef, { materials: materials });
+            }
+            if (e.target.classList.contains('save-weight-btn')) {
+                const index = e.target.dataset.index;
+                const weightValue = e.target.closest('.material-card').querySelector('.weight-input').value;
+                if (weightValue) {
+                    materials[index].finalWeight = parseFloat(weightValue);
+                    await updateDoc(shipmentRef, { materials: materials });
+                }
+            }
+            if (e.target.classList.contains('item-report-btn')) {
+                appState.currentIncident.materialName = e.target.dataset.materialName;
+                document.getElementById('modal-title').textContent = `Reportar Incidencia: ${appState.currentIncident.materialName}`;
+                incidentModal.classList.remove('hidden');
+            }
+        });
+        
+        async function saveIncident() {
+            const text = document.getElementById('incident-text').value;
+            if (!text) return;
+            const incidentsColRef = collection(db, "shipments", appState.selectedShipmentId, "incidents");
+            await addDoc(incidentsColRef, {
+                material: appState.currentIncident.materialName,
+                description: text,
+                reportedAt: serverTimestamp()
+            });
+            incidentModal.classList.add('hidden');
+            document.getElementById('incident-text').value = '';
+        }
+
+        statusFilters.addEventListener('click', e => {
+            if (e.target.classList.contains('status-filter-btn')) {
+                statusFilters.querySelectorAll('.status-filter-btn').forEach(btn => btn.classList.remove('bg-orange-500', 'text-white') || btn.classList.add('text-gray-600'));
+                e.target.classList.add('bg-orange-500', 'text-white');
+                appState.currentStatusFilter = e.target.dataset.status;
+                listenToShipments();
+            }
+        });
+
+        searchInput.addEventListener('input', listenToShipments);
+        document.getElementById('back-to-list').addEventListener('click', () => navigate('list'));
+        mainActionButton.addEventListener('click', updateShipmentStatus);
+        document.getElementById('modal-cancel-btn').addEventListener('click', () => incidentModal.classList.add('hidden'));
+        document.getElementById('modal-save-btn').addEventListener('click', saveIncident);
+        seedDataButton.addEventListener('click', seedDatabase);
+        
+        // --- Dashboard & Menu Logic ---
+        menuIcon.addEventListener('click', () => menuDropdown.classList.toggle('hidden'));
+        document.addEventListener('click', e => { 
+            if (!menuIcon.contains(e.target) && !menuDropdown.contains(e.target)) {
+                menuDropdown.classList.add('hidden');
+            }
+        });
+        adminRoleButton.addEventListener('click', e => { e.preventDefault(); navigate('dashboard'); });
+        backToTrackerFromDash.addEventListener('click', () => navigate('tracker'));
+
+        function initializeDashboard() {
+            flatpickr("#date-range-picker", { mode: "range" });
+            Object.values(appState.charts).forEach(chart => chart.destroy());
+            appState.charts.carton = new Chart('carton-chart', { type: 'bar', data: { labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'], datasets: [{ label: 'Tn', data: [186, 305, 237, 73, 209, 214], backgroundColor: '#2dd4bf' }] }, options: {plugins: { legend: {display: false}}}});
+            appState.charts.material = new Chart('material-chart', { type: 'bar', data: { labels: ['Cartón', 'Plástico', 'Zuncho', 'Otros'], datasets: [{ label: 'Tn', data: [520, 410, 350, 300], backgroundColor: ['#2dd4bf', '#fb923c', '#3b82f6', '#facc15'] }] }, options: { indexAxis: 'y', plugins: { legend: {display: false}}}});
+            appState.charts.city = new Chart('city-chart', { type: 'line', data: { labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'], datasets: [{ label: 'Cúcuta', data: [300, 450, 400, 350, 500, 550], borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.2)', fill: true, tension: 0.4 }, { label: 'Gachancipá', data: [200, 300, 250, 400, 450, 400], borderColor: '#fb923c', backgroundColor: 'rgba(251, 146, 60, 0.2)', fill: true, tension: 0.4 }] }, options: { plugins: { legend: { position: 'bottom' }}}});
+        }
+
+        async function seedDatabase() {
+            seedDataButton.disabled = true;
+            seedDataButton.textContent = 'Cargando...';
+            const batch = writeBatch(db);
+            const mockData = [
+                { id: 'REC-SM48-0012', status: 'en-tienda', vehiclePlate: 'WXY-123', driverPhone: '300 123 4567', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', type: 'Compactado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null }, { name: 'Plástico PET', type: 'Botellas', quantity: 1, unit: 'Unidad', verified: false, finalWeight: null }] },
+                { id: 'REC-SM48-0015', status: 'en-tienda', vehiclePlate: 'RST-456', driverPhone: '310 987 6543', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', type: 'Compactado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null }] },
+                { id: 'REC-SM48-0018', status: 'en-transito', vehiclePlate: 'UVX-789', driverPhone: '320 111 2233', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Plástico PET', type: 'Botellas', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null }] },
+                { id: 'REC-SM48-0100', status: 'recibido', vehiclePlate: 'ABC-111', driverPhone: '301 444 5566', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Zuncho', type: 'Rollos', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null }, { name: 'Cartón', type: 'Plegadiza', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null }] },
+            ];
+            
+            mockData.forEach(shipment => {
+                const { id, ...data } = shipment;
+                batch.set(doc(db, "shipments", id), data);
+            });
+
+            try {
+                await batch.commit();
+                seedDataButton.textContent = '¡Datos cargados!';
+            } catch (e) { console.error("Error seeding: ", e); seedDataButton.disabled = false; seedDataButton.textContent = 'Cargar datos de prueba'; }
+        }
+    </script>
+</body>
+</html>
