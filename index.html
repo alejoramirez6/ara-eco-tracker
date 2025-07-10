@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ara Eco-Tracker con Firebase</title>
+    <title>Ara Eco-Tracker Completo</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
@@ -38,11 +38,69 @@
 
     <div class="mobile-shell">
         <div id="app-container" class="flex-grow flex flex-col bg-white relative">
+            
+            <!-- VISTA DE SELECCIÓN DE ROL -->
+            <div id="role-selection-view" class="flex flex-col flex-grow items-center justify-center p-8 bg-gray-50">
+                <img src="https://i.imgur.com/GqR3D3F.png" alt="Logo de Ara" class="w-32 mb-8" onerror="this.onerror=null;this.src='https://placehold.co/128x128/f97316/white?text=Ara';">
+                <h1 class="text-2xl font-bold text-gray-800 mb-2">Bienvenido</h1>
+                <p class="text-gray-600 mb-12">Selecciona tu rol para continuar</p>
+                <div class="w-full space-y-4">
+                    <button id="role-store-btn" class="w-full text-lg bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors">Rol Tienda</button>
+                    <button id="role-cedi-btn" class="w-full text-lg bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-colors">Rol CEDI / Admin</button>
+                </div>
+            </div>
 
-            <!-- VISTA DE LISTA DE ENVÍOS -->
-            <div id="shipment-list-view" class="flex flex-col flex-grow">
+            <!-- VISTA DE CREAR ENVÍO (TIENDA) -->
+            <div id="create-shipment-view" class="hidden flex-col flex-grow">
+                <header class="flex items-center justify-between p-6 border-b">
+                    <div class="w-8 h-8"><svg id="back-to-roles-from-create" class="w-6 h-6 text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
+                    <h1 class="text-xl font-bold text-orange-500">Crear Nuevo Envío</h1>
+                    <div class="w-8 h-8"></div>
+                </header>
+                <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
+                    <form id="create-shipment-form">
+                        <div class="space-y-6">
+                            <div>
+                                <label for="cedi-select" class="block text-sm font-medium text-gray-700 mb-1">1. Seleccione CEDI de Destino</label>
+                                <select id="cedi-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm">
+                                    <option value="">-- Seleccionar --</option>
+                                    <option value="98001">98001 - CEDI Cúcuta</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="store-select" class="block text-sm font-medium text-gray-700 mb-1">2. Seleccione su Tienda</label>
+                                <select id="store-select" class="w-full p-2 border border-gray-300 rounded-md shadow-sm bg-gray-100" disabled>
+                                    <option value="">-- Primero seleccione un CEDI --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label for="vehicle-plate" class="block text-sm font-medium text-gray-700 mb-1">3. Placa del Vehículo</label>
+                                <input type="text" id="vehicle-plate" class="w-full p-2 border border-gray-300 rounded-md shadow-sm uppercase" placeholder="AAA000">
+                            </div>
+                             <div>
+                                <label for="driver-phone" class="block text-sm font-medium text-gray-700 mb-1">4. Celular del Conductor</label>
+                                <input type="tel" id="driver-phone" class="w-full p-2 border border-gray-300 rounded-md shadow-sm" placeholder="3001234567">
+                            </div>
+                            <div>
+                                <h3 class="text-sm font-medium text-gray-700 mb-2">5. Materiales del Envío</h3>
+                                <div id="materials-container" class="space-y-3"></div>
+                                <button type="button" id="add-material-btn" class="mt-2 text-sm text-orange-600 font-semibold hover:text-orange-800 flex items-center">
+                                    <svg class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                                    Añadir Material
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </main>
+                <footer class="p-6 mt-auto border-t">
+                    <button type="submit" form="create-shipment-form" class="w-full bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600">Confirmar y Crear Envío</button>
+                </footer>
+            </div>
+
+            <!-- VISTA DE LISTA DE ENVÍOS (CEDI) -->
+            <div id="shipment-list-view" class="hidden flex-col flex-grow">
                  <header class="flex items-center justify-between mb-4 p-6 border-b">
-                     <div class="w-8 h-8"></div>
+                     <div class="w-8 h-8"><svg id="back-to-roles-from-list" class="w-6 h-6 text-gray-800 cursor-pointer" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
                      <h1 class="text-2xl font-bold text-gray-800">CÚCUTA</h1>
                      <div class="w-8 h-8"></div>
                 </header>
@@ -67,7 +125,7 @@
             </div>
 
             <!-- VISTA DE SEGUIMIENTO (TRACKER) -->
-            <div id="tracker-view" class="hidden flex flex-col flex-grow">
+            <div id="tracker-view" class="hidden flex-col flex-grow">
                 <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
                     <header class="flex items-center justify-between mb-8">
                          <div class="w-8 h-8">
@@ -77,7 +135,7 @@
                          <div class="w-8 h-8 relative">
                             <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                             <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
-                                <a href="#" id="admin-role-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rol Administrador</a>
+                                <a href="#" id="admin-role-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
                             </div>
                          </div>
                     </header>
@@ -108,14 +166,14 @@
             <!-- VISTA DE DASHBOARD -->
             <div id="dashboard-view" class="hidden flex-grow flex flex-col">
                 <header class="flex items-center justify-between mb-6 p-6 border-b">
-                     <div class="w-8 h-8"><svg id="back-to-tracker-from-dash" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
+                     <div class="w-8 h-8"><svg id="back-to-list-from-dash" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
                      <h1 class="text-xl font-bold text-orange-500">Dashboard Administrador</h1>
                      <div class="w-8 h-8"></div>
                 </header>
                 <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
                     <div class="flex flex-col sm:flex-row gap-4 mb-6"><select id="period-select" class="w-full sm:w-1/3 p-2 border rounded-md shadow-sm"><option value="quarterly">Último Trimestre</option><option value="semi-annually">Último Semestre</option><option value="custom">Personalizado</option></select><input id="date-range-picker" type="text" class="w-full sm:w-2/3 p-2 border rounded-md shadow-sm hidden" placeholder="Seleccione un rango de fechas"></div>
                     <h3 class="text-lg font-bold text-gray-700 mb-2">Acumulado Enero-Marzo 2025</h3>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200 mb-8"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tienda</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plástico (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cartón (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-4 py-2 text-sm">Cúcuta Los Ángeles</td><td class="px-4 py-2 text-sm">159</td><td class="px-4 py-2 text-sm">6</td><td class="px-4 py-2 text-sm font-bold">165</td></tr><tr class="bg-gray-50"><td class="px-4 py-2 text-sm">Cúcuta Guaimaral</td><td class="px-4 py-2 text-sm">237</td><td class="px-4 py-2 text-sm">9</td><td class="px-4 py-2 text-sm font-bold">246</td></tr><tr><td class="px-4 py-2 text-sm">Cúcuta Libertadores</td><td class="px-4 py-2 text-sm">262</td><td class="px-4 py-2 text-sm">16</td><td class="px-4 py-2 text-sm font-bold">278</td></tr></tbody></table></div>
+                    <div class="overflow-x-auto rounded-lg border border-gray-200 mb-8"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tienda</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plástico (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cartón (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-4 py-2 text-sm">Cúcuta Los Ángeles</td><td class="px-4 py-2 text-sm">159</td><td class="px-4 py-2 text-sm">6</td><td class="px-4 py-2 text-sm font-bold">165</td></tr><tr class="bg-gray-50"><td class="px-4 py-2 text-sm">Cúcuta Guaimaral</td><td class="px-4 py-2 text-sm">237</td><td class="px-4 py-2 text-sm">9</td><td class="px-4 py-2 text-sm font-bold">246</td></tr><tr><td class="px-4 py-2 text-sm">Villa del Rosario</td><td class="px-4 py-2 text-sm">262</td><td class="px-4 py-2 text-sm">16</td><td class="px-4 py-2 text-sm font-bold">278</td></tr></tbody></table></div>
                     <div class="grid grid-cols-1 gap-8"><div><h3 class="font-semibold mb-2">Cartón acumulado (últimos 6 meses)</h3><canvas id="carton-chart"></canvas></div><div><h3 class="font-semibold mb-2">Material acumulado</h3><canvas id="material-chart"></canvas></div><div><h3 class="font-semibold mb-2">Ciudad acumulado (Cúcuta vs Gachancipá)</h3><canvas id="city-chart"></canvas></div></div>
                 </main>
             </div>
@@ -138,7 +196,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, doc, onSnapshot, updateDoc, query, where, writeBatch, addDoc, serverTimestamp, Timestamp, getDocs, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA5V1pHDB9h40pfLMNi0SUOHlqVF28z9-s",
@@ -154,16 +212,20 @@
         const db = getFirestore(app);
 
         const appState = {
-            currentView: 'list', selectedShipmentId: null, selectedShipmentData: null,
+            currentView: 'role-selection', selectedShipmentId: null, selectedShipmentData: null,
             currentStatusFilter: 'en-tienda', unsubscribe: null, currentIncident: { materialName: null },
-            charts: {}
+            charts: {}, userRole: null
         };
 
         const views = { 
+            roleSelection: document.getElementById('role-selection-view'),
+            createShipment: document.getElementById('create-shipment-view'),
             list: document.getElementById('shipment-list-view'), 
             tracker: document.getElementById('tracker-view'),
             dashboard: document.getElementById('dashboard-view')
         };
+        
+        // --- Selectores de Elementos ---
         const shipmentsContainer = document.getElementById('shipments-container');
         const searchInput = document.getElementById('search-shipment');
         const statusFilters = document.getElementById('status-filters');
@@ -176,10 +238,9 @@
         const menuIcon = document.getElementById('menu-icon');
         const menuDropdown = document.getElementById('menu-dropdown');
         const adminRoleButton = document.getElementById('admin-role-button');
-        const backToTrackerFromDash = document.getElementById('back-to-tracker-from-dash');
+        const backToListFromDash = document.getElementById('back-to-list-from-dash');
 
-
-        function navigate(view) {
+        function navigate(view, extra) {
             appState.currentView = view;
             Object.values(views).forEach(v => v.classList.add('hidden'));
             views[view].classList.remove('hidden');
@@ -189,7 +250,8 @@
             if (view === 'list') {
                 listenToShipments();
             } else if (view === 'tracker') {
-                if (!appState.selectedShipmentId) navigate('list');
+                appState.selectedShipmentId = extra;
+                if (!appState.selectedShipmentId) navigate(appState.userRole === 'cedi' ? 'list' : 'createShipment');
                 else listenToSingleShipment();
             } else if (view === 'dashboard') {
                 initializeDashboard();
@@ -197,10 +259,112 @@
         }
 
         onAuthStateChanged(auth, user => {
-            if (user) { navigate('list'); } 
+            if (user) { navigate('roleSelection'); } 
             else { signInAnonymously(auth).catch(e => console.error("Sign-in failed:", e)); }
         });
 
+        // --- Lógica de Roles ---
+        document.getElementById('role-store-btn').addEventListener('click', () => {
+            appState.userRole = 'store';
+            navigate('createShipment');
+        });
+        document.getElementById('role-cedi-btn').addEventListener('click', () => {
+            appState.userRole = 'cedi';
+            navigate('list');
+        });
+        document.getElementById('back-to-roles-from-create').addEventListener('click', () => navigate('roleSelection'));
+        document.getElementById('back-to-roles-from-list').addEventListener('click', () => navigate('roleSelection'));
+
+        // --- Lógica de Creación de Envío ---
+        const createShipmentForm = document.getElementById('create-shipment-form');
+        const cediSelect = document.getElementById('cedi-select');
+        const storeSelect = document.getElementById('store-select');
+        const materialsContainer = document.getElementById('materials-container');
+        const storeData = { "98001": [{ code: "060", name: "Ara Villa del Rosario" }, { code: "086", name: "Cúcuta Los Ángeles" }, { code: "127", name: "Cúcuta Guaimaral" }] };
+
+        cediSelect.addEventListener('change', () => {
+            const cediCode = cediSelect.value;
+            storeSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
+            if (cediCode && storeData[cediCode]) {
+                storeData[cediCode].forEach(store => storeSelect.innerHTML += `<option value="${store.code}">${store.code} - ${store.name}</option>`);
+                storeSelect.disabled = false;
+                storeSelect.classList.remove('bg-gray-100');
+            } else {
+                storeSelect.disabled = true;
+                storeSelect.classList.add('bg-gray-100');
+            }
+        });
+        
+        document.getElementById('add-material-btn').addEventListener('click', () => {
+            const materialId = `material-${Date.now()}`;
+            const materialDiv = document.createElement('div');
+            materialDiv.id = materialId;
+            materialDiv.className = 'flex items-center space-x-2 p-2 border rounded-md';
+            materialDiv.innerHTML = `
+                <select class="material-name-select flex-grow p-1 border-r" name="materialName">
+                    <option value="">Tipo de material</option>
+                    <option value="Cartón Corrugado">Cartón Corrugado</option>
+                    <option value="Plástico PET">Plástico PET</option>
+                    <option value="Zuncho">Zuncho</option>
+                </select>
+                <input type="number" name="quantity" class="w-20 p-1" placeholder="Cant.">
+                 <select class="material-unit-select w-24 p-1 border-l" name="materialUnit">
+                    <option value="Pacas">Pacas</option>
+                    <option value="Unidades">Unidades</option>
+                    <option value="Rollos">Rollos</option>
+                </select>
+                <button type="button" class="text-red-500" onclick="document.getElementById('${materialId}').remove()">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
+                </button>`;
+            materialsContainer.appendChild(materialDiv);
+        });
+
+        createShipmentForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const cediCode = cediSelect.value;
+            const storeCode = storeSelect.value;
+            const vehiclePlate = document.getElementById('vehicle-plate').value.toUpperCase();
+            const driverPhone = document.getElementById('driver-phone').value;
+
+            if (!cediCode || !storeCode || !vehiclePlate || !driverPhone) {
+                return alert("Por favor, complete todos los campos.");
+            }
+
+            const materials = Array.from(materialsContainer.querySelectorAll('div')).map(div => ({
+                name: div.querySelector('select[name="materialName"]').value,
+                quantity: parseInt(div.querySelector('input[name="quantity"]').value),
+                unit: div.querySelector('select[name="materialUnit"]').value,
+                verified: false,
+                finalWeight: null
+            })).filter(m => m.name && m.quantity && m.unit);
+
+            if (materials.length === 0) return alert("Debe añadir al menos un material.");
+
+            const q = query(collection(db, "shipments"), where("storeCode", "==", storeCode));
+            const querySnapshot = await getDocs(q);
+            const shipmentId = `REC-${storeCode}-${(querySnapshot.size + 1).toString().padStart(4, '0')}`;
+
+            const shipmentData = {
+                id: shipmentId, cediCode, storeCode, vehiclePlate, driverPhone, materials,
+                status: 'en-tienda',
+                dispatchTimestamp: Timestamp.fromDate(new Date()),
+            };
+
+            try {
+                await setDoc(doc(db, "shipments", shipmentId), shipmentData);
+                alert(`¡Envío ${shipmentId} creado con éxito!`);
+                createShipmentForm.reset();
+                materialsContainer.innerHTML = '';
+                storeSelect.disabled = true;
+                storeSelect.classList.add('bg-gray-100');
+            } catch (error) {
+                console.error("Error al crear envío: ", error);
+                alert("Hubo un error al crear el envío.");
+            }
+        });
+
+
+        // --- Lógica de Lista y Tracker (CEDI) ---
         function listenToShipments() {
             loadingIndicator.classList.remove('hidden');
             noDataMessage.classList.add('hidden');
@@ -225,8 +389,7 @@
 
         shipmentsContainer.addEventListener('click', e => {
             if (e.target.classList.contains('shipment-btn')) {
-                appState.selectedShipmentId = e.target.dataset.shipmentId;
-                navigate('tracker');
+                navigate('tracker', e.target.dataset.shipmentId);
             }
         });
 
@@ -268,7 +431,7 @@
             materialListContainer.innerHTML = shipment.materials.map((item, index) => `
                 <div class="material-card flex items-center bg-gray-50 rounded-xl p-4 border border-gray-200">
                     ${isReceiving ? `<div class="mr-4"><input type="checkbox" data-index="${index}" class="custom-checkbox reception-checkbox" ${item.verified ? 'checked' : ''}></div>` : ''}
-                    <div class="flex-grow"><p class="font-semibold text-gray-800">${item.name}</p><p class="text-sm text-gray-500">${item.type}</p></div>
+                    <div class="flex-grow"><p class="font-semibold text-gray-800">${item.name}</p></div>
                     <div class="text-right ml-4">
                         <p class="material-qty font-bold text-lg text-gray-800 ${isWeighing ? 'hidden' : ''}">${item.quantity} ${item.unit}</p>
                         <div class="material-weight-input ${isWeighing ? '' : 'hidden'}"><input type="number" data-index="${index}" class="w-24 text-right p-1 border rounded weight-input" placeholder="0.00" value="${item.finalWeight || ''}"><span class="text-xs font-bold ml-1">Tn</span></div>
@@ -279,33 +442,9 @@
 
             const detailsContainer = document.getElementById('shipment-details-container');
             detailsContainer.innerHTML = `
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1z"/><path d="M18 18h1a1 1 0 001-1v-6a1 1 0 00-1-1h-1l-3-4H9"/></svg>
-                    </div>
-                    <div class="flex-grow">
-                        <p class="text-sm text-gray-500">Placa del Vehículo</p>
-                        <p class="font-semibold text-gray-800">${shipment.vehiclePlate}</p>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.76a11.034 11.034 0 006.364 6.364l.76-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg>
-                    </div>
-                    <div class="flex-grow">
-                        <p class="text-sm text-gray-500">Celular del Conductor</p>
-                        <p class="font-semibold text-gray-800">${shipment.driverPhone}</p>
-                    </div>
-                </div>
-                <div class="flex items-center">
-                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                    </div>
-                    <div class="flex-grow">
-                        <p class="text-sm text-gray-500">Fecha y Hora de Envío</p>
-                        <p class="font-semibold text-gray-800">${shipment.dispatchTimestamp ? new Date(shipment.dispatchTimestamp.seconds * 1000).toLocaleString('es-CO') : 'N/A'}</p>
-                    </div>
-                </div>`;
+                <div class="flex items-center"><div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"><svg class="h-6 w-6 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"/><path d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10l2 2h8a1 1 0 001-1z"/><path d="M18 18h1a1 1 0 001-1v-6a1 1 0 00-1-1h-1l-3-4H9"/></svg></div><div class="flex-grow"><p class="text-sm text-gray-500">Placa del Vehículo</p><p class="font-semibold text-gray-800">${shipment.vehiclePlate}</p></div></div>
+                <div class="flex items-center"><div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"><svg class="h-6 w-6 text-green-500" viewBox="0 0 20 20" fill="currentColor"><path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.518.76a11.034 11.034 0 006.364 6.364l.76-1.518a1 1 0 011.06-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z" /></svg></div><div class="flex-grow"><p class="text-sm text-gray-500">Celular del Conductor</p><p class="font-semibold text-gray-800">${shipment.driverPhone}</p></div></div>
+                <div class="flex items-center"><div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"><svg class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div><div class="flex-grow"><p class="text-sm text-gray-500">Fecha y Hora de Envío</p><p class="font-semibold text-gray-800">${shipment.dispatchTimestamp ? new Date(shipment.dispatchTimestamp.seconds * 1000).toLocaleString('es-CO') : 'N/A'}</p></div></div>`;
 
             updateMainActionButton();
         }
@@ -340,11 +479,9 @@
             const shipmentRef = doc(db, "shipments", appState.selectedShipmentId);
             try {
                 await updateDoc(shipmentRef, { status: nextStatus });
-                if (nextStatus === 'finalizado') {
-                    navigate('list');
-                }
+                if (nextStatus === 'finalizado') navigate('list');
             } catch (error) {
-                console.error("Error updating shipment status: ", error);
+                console.error("Error updating status: ", error);
                 updateMainActionButton();
             }
         }
@@ -356,14 +493,14 @@
             if (e.target.classList.contains('reception-checkbox')) {
                 const index = e.target.dataset.index;
                 materials[index].verified = e.target.checked;
-                await updateDoc(shipmentRef, { materials: materials });
+                await updateDoc(shipmentRef, { materials });
             }
             if (e.target.classList.contains('save-weight-btn')) {
                 const index = e.target.dataset.index;
                 const weightValue = e.target.closest('.material-card').querySelector('.weight-input').value;
                 if (weightValue) {
                     materials[index].finalWeight = parseFloat(weightValue);
-                    await updateDoc(shipmentRef, { materials: materials });
+                    await updateDoc(shipmentRef, { materials });
                 }
             }
             if (e.target.classList.contains('item-report-btn')) {
@@ -402,7 +539,6 @@
         document.getElementById('modal-save-btn').addEventListener('click', saveIncident);
         seedDataButton.addEventListener('click', seedDatabase);
         
-        // --- Dashboard & Menu Logic ---
         menuIcon.addEventListener('click', () => menuDropdown.classList.toggle('hidden'));
         document.addEventListener('click', e => { 
             if (!menuIcon.contains(e.target) && !menuDropdown.contains(e.target)) {
@@ -410,7 +546,7 @@
             }
         });
         adminRoleButton.addEventListener('click', e => { e.preventDefault(); navigate('dashboard'); });
-        backToTrackerFromDash.addEventListener('click', () => navigate('tracker'));
+        backToListFromDash.addEventListener('click', () => navigate('list'));
 
         function initializeDashboard() {
             flatpickr("#date-range-picker", { mode: "range" });
@@ -425,10 +561,10 @@
             seedDataButton.textContent = 'Cargando...';
             const batch = writeBatch(db);
             const mockData = [
-                { id: 'REC-SM48-0012', status: 'en-tienda', vehiclePlate: 'WXY-123', driverPhone: '300 123 4567', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', type: 'Compactado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null }, { name: 'Plástico PET', type: 'Botellas', quantity: 1, unit: 'Unidad', verified: false, finalWeight: null }] },
-                { id: 'REC-SM48-0015', status: 'en-tienda', vehiclePlate: 'RST-456', driverPhone: '310 987 6543', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', type: 'Compactado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null }] },
-                { id: 'REC-SM48-0018', status: 'en-transito', vehiclePlate: 'UVX-789', driverPhone: '320 111 2233', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Plástico PET', type: 'Botellas', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null }] },
-                { id: 'REC-SM48-0100', status: 'recibido', vehiclePlate: 'ABC-111', driverPhone: '301 444 5566', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Zuncho', type: 'Rollos', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null }, { name: 'Cartón', type: 'Plegadiza', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null }] },
+                { id: 'REC-086-0001', storeCode: '086', status: 'en-tienda', vehiclePlate: 'WXY-123', driverPhone: '300 123 4567', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 4, unit: 'Pacas', verified: false, finalWeight: null }, { name: 'Plástico PET', quantity: 1, unit: 'Unidades', verified: false, finalWeight: null }] },
+                { id: 'REC-127-0001', storeCode: '127', status: 'en-tienda', vehiclePlate: 'RST-456', driverPhone: '310 987 6543', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Cartón Corrugado', quantity: 8, unit: 'Pacas', verified: false, finalWeight: null }] },
+                { id: 'REC-060-0001', storeCode: '060', status: 'en-transito', vehiclePlate: 'UVX-789', driverPhone: '320 111 2233', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Plástico PET', quantity: 5, unit: 'Unidades', verified: false, finalWeight: null }] },
+                { id: 'REC-086-0002', storeCode: '086', status: 'recibido', vehiclePlate: 'ABC-111', driverPhone: '301 444 5566', dispatchTimestamp: Timestamp.fromDate(new Date()), materials: [{ name: 'Zuncho', quantity: 12, unit: 'Rollos', verified: false, finalWeight: null }, { name: 'Cartón Corrugado', quantity: 2, unit: 'Pacas', verified: false, finalWeight: null }] },
             ];
             
             mockData.forEach(shipment => {
