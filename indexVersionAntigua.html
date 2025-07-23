@@ -7,13 +7,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-    <script src="https://npmcdn.com/flatpickr/dist/l10n/es.js"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <style>
         body { font-family: 'Inter', sans-serif; }
         .mobile-shell {
@@ -44,54 +41,26 @@
             margin: 2rem 2rem auto auto;
             display: block;
         }
-        
-        /* Estilos para el modal de edición de materiales */
-        .material-name-select, .material-unit-select {
-            background-color: white;
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(156, 163, 175, 0.5) transparent;
         }
-        
-        .material-name-select:focus, .material-unit-select:focus {
-            outline: none;
-            border-color: #f97316;
-            box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
         }
-        
-        .delete-material-btn:hover {
-            transform: scale(1.1);
-            transition: transform 0.2s ease;
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
         }
-        
-        #edit-materials-modal .max-h-\[90vh\] {
-            max-height: 90vh;
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(156, 163, 175, 0.5);
+            border-radius: 3px;
         }
-        
-        /* Estilos para el buscador personalizado de tiendas */
-        #store-select-container {
-            position: relative;
-        }
-        
-        #store-search-input {
-            background-color: white;
-            transition: border-color 0.2s ease;
-        }
-        
-        #store-search-input:focus {
-            outline: none;
-            border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-        }
-        
-        #store-options-list {
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-        }
-        
-        #store-options-list div:hover {
-            background-color: #f3f4f6;
-            transition: background-color 0.2s ease;
-        }
-        
-        #store-options-list div:active {
-            background-color: #e5e7eb;
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(156, 163, 175, 0.7);
         }
     </style>
 </head>
@@ -106,9 +75,8 @@
                 <h1 class="text-2xl font-bold text-gray-800 mb-2">Bienvenido</h1>
                 <p class="text-gray-600 mb-12">Selecciona tu rol para continuar</p>
                 <div class="w-full space-y-4">
-                    <button id="role-store-btn" class="w-full text-lg bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors">Envíos</button>
-                    <button id="role-cedi-btn" class="w-full text-lg bg-red-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-red-700 transition-colors">Recepción</button>
-                    <button id="role-reports-btn" class="w-full text-lg bg-yellow-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-yellow-600 transition-colors">Informes</button>
+                    <button id="role-store-btn" class="w-full text-lg bg-orange-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-orange-600 transition-colors">Rol Tienda</button>
+                    <button id="role-cedi-btn" class="w-full text-lg bg-gray-700 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-colors">Rol CEDI / Admin</button>
                 </div>
             </div>
 
@@ -197,7 +165,7 @@
                          <div class="w-8 h-8 relative">
                             <svg id="menu-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" /></svg>
                             <div id="menu-dropdown" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-20">
-                                <a href="#" id="admin-role-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Informes</a>
+                                <a href="#" id="admin-role-button" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Dashboard</a>
                             </div>
                          </div>
                     </header>
@@ -226,17 +194,168 @@
             </div>
             
             <!-- VISTA DE DASHBOARD -->
-            <div id="dashboard-view" class="hidden flex-grow flex flex-col">
-                <header class="flex items-center justify-between mb-6 p-6 border-b">
-                     <div class="w-8 h-8"><svg id="back-to-list-from-dash" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
-                     <h1 class="text-xl font-bold text-orange-500">Dashboard Administrador</h1>
-                     <div class="w-8 h-8"></div>
+            <div id="dashboard-view" class="hidden flex-grow flex flex-col h-screen overflow-hidden">
+                <header class="flex items-center justify-between p-4 border-b bg-white">
+                    <div class="w-8 h-8"><svg id="back-to-list-from-dash" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6 text-gray-800 cursor-pointer"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" /></svg></div>
+                    <h1 class="text-lg font-bold text-orange-500">Dashboard Administrador</h1>
+                    <div class="w-8 h-8"></div>
                 </header>
-                <main class="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                    <div class="flex flex-col sm:flex-row gap-4 mb-6"><select id="period-select" class="w-full sm:w-1/3 p-2 border rounded-md shadow-sm"><option value="quarterly">Último Trimestre</option><option value="semi-annually">Último Semestre</option><option value="custom">Personalizado</option></select><input id="date-range-picker" type="text" class="w-full sm:w-2/3 p-2 border rounded-md shadow-sm hidden" placeholder="Seleccione un rango de fechas"></div>
-                    <h3 class="text-lg font-bold text-gray-700 mb-2">Acumulado Enero-Marzo 2025</h3>
-                    <div class="overflow-x-auto rounded-lg border border-gray-200 mb-8"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tienda</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Plástico (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cartón (Tn)</th><th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th></tr></thead><tbody class="bg-white divide-y divide-gray-200"><tr><td class="px-4 py-2 text-sm">Cúcuta Los Ángeles</td><td class="px-4 py-2 text-sm">159</td><td class="px-4 py-2 text-sm">6</td><td class="px-4 py-2 text-sm font-bold">165</td></tr><tr class="bg-gray-50"><td class="px-4 py-2 text-sm">Cúcuta Guaimaral</td><td class="px-4 py-2 text-sm">237</td><td class="px-4 py-2 text-sm">9</td><td class="px-4 py-2 text-sm font-bold">246</td></tr><tr><td class="px-4 py-2 text-sm">Villa del Rosario</td><td class="px-4 py-2 text-sm">262</td><td class="px-4 py-2 text-sm">16</td><td class="px-4 py-2 text-sm font-bold">278</td></tr></tbody></table></div>
-                    <div class="grid grid-cols-1 gap-8"><div><h3 class="font-semibold mb-2">Cartón acumulado (últimos 6 meses)</h3><canvas id="carton-chart"></canvas></div><div><h3 class="font-semibold mb-2">Material acumulado</h3><canvas id="material-chart"></canvas></div><div><h3 class="font-semibold mb-2">Ciudad acumulado (Cúcuta vs Gachancipá)</h3><canvas id="city-chart"></canvas></div></div>
+                
+                <main class="flex-1 overflow-y-auto custom-scrollbar bg-gray-50">
+                    <div class="p-4 space-y-6">
+                        <!-- Filtros superiores -->
+                        <div class="sticky top-0 bg-gray-50 p-2 rounded-lg z-10 shadow-sm">
+                            <div class="flex flex-col sm:flex-row gap-2">
+                                <select id="period-select" class="w-full sm:w-1/3 p-2 border rounded-md shadow-sm text-sm bg-white">
+                                    <option value="today">Hoy</option>
+                                    <option value="week">Última Semana</option>
+                                    <option value="month">Último Mes</option>
+                                    <option value="quarter">Último Trimestre</option>
+                                    <option value="custom">Personalizado</option>
+                                </select>
+                                <select id="region-select" class="w-full sm:w-1/3 p-2 border rounded-md shadow-sm text-sm bg-white">
+                                    <option value="all">Todas las Regiones</option>
+                                    <option value="norte">Región Norte</option>
+                                    <option value="centro">Región Centro</option>
+                                    <option value="sur">Región Sur</option>
+                                </select>
+                                <input id="date-range-picker" type="text" class="w-full sm:w-1/3 p-2 border rounded-md shadow-sm hidden text-sm bg-white" placeholder="Seleccione un rango de fechas">
+                            </div>
+                        </div>
+
+                        <!-- KPIs principales -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <div class="bg-white p-3 rounded-lg shadow">
+                                <h3 class="text-xs font-medium text-gray-500">Volumen Total</h3>
+                                <p id="total-weight" class="text-2xl font-bold text-gray-900 mt-1">0 Tn</p>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-green-600 font-medium">+0% </span>
+                                    <span class="text-xs text-gray-500 ml-1">vs mes anterior</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow">
+                                <h3 class="text-xs font-medium text-gray-500">Tasa de Cumplimiento</h3>
+                                <p id="completion-rate" class="text-2xl font-bold text-gray-900 mt-1">0%</p>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-green-600 font-medium">Meta: 95%</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow">
+                                <h3 class="text-xs font-medium text-gray-500">Tiempo Promedio</h3>
+                                <p id="avg-time" class="text-2xl font-bold text-gray-900 mt-1">0h</p>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-orange-600 font-medium">Meta: 24h</span>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow">
+                                <h3 class="text-xs font-medium text-gray-500">Calidad de Envíos</h3>
+                                <p id="quality-rate" class="text-2xl font-bold text-gray-900 mt-1">0%</p>
+                                <div class="flex items-center mt-1">
+                                    <span class="text-xs text-red-600 font-medium">Meta: 98%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Gráficos principales -->
+                        <div class="space-y-6">
+                            <!-- Rendimiento por Material -->
+                            <div class="bg-white p-4 rounded-lg shadow">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-gray-800">Rendimiento por Material</h3>
+                                        <p class="text-xs text-gray-500 mt-1">Distribución del volumen de reciclaje por tipo de material</p>
+                                    </div>
+                                    <select class="text-xs border rounded p-1">
+                                        <option>Por Peso</option>
+                                        <option>Por Cantidad</option>
+                                    </select>
+                                </div>
+                                <div class="h-64">
+                                    <canvas id="material-chart"></canvas>
+                                </div>
+                                <div class="mt-4 text-xs text-gray-500">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 bg-teal-400 rounded-full"></span>
+                                        <span>El eje vertical muestra los tipos de materiales</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="w-3 h-3 bg-orange-400 rounded-full"></span>
+                                        <span>El eje horizontal muestra el peso en toneladas o cantidad según la selección</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Análisis Temporal -->
+                            <div class="bg-white p-4 rounded-lg shadow">
+                                <div class="flex justify-between items-center mb-4">
+                                    <div>
+                                        <h3 class="text-sm font-semibold text-gray-800">Análisis Temporal</h3>
+                                        <p class="text-xs text-gray-500 mt-1">Evolución del volumen de reciclaje a lo largo del tiempo</p>
+                                    </div>
+                                    <select class="text-xs border rounded p-1">
+                                        <option>Diario</option>
+                                        <option>Semanal</option>
+                                        <option>Mensual</option>
+                                    </select>
+                                </div>
+                                <div class="h-64">
+                                    <canvas id="trend-chart"></canvas>
+                                </div>
+                                <div class="mt-4 text-xs text-gray-500">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-3 h-3 bg-blue-400 rounded-full"></span>
+                                        <span>El eje horizontal muestra el período de tiempo seleccionado</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 mt-1">
+                                        <span class="w-3 h-3 bg-green-400 rounded-full"></span>
+                                        <span>El eje vertical muestra el volumen total en toneladas</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Tabla de rendimiento -->
+                        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+                            <div class="p-3 border-b flex justify-between items-center">
+                                <h3 class="text-sm font-semibold text-gray-800">Rendimiento por Tienda</h3>
+                                <div class="flex gap-2">
+                                    <button class="text-xs bg-gray-100 px-2 py-1 rounded">Exportar</button>
+                                    <select class="text-xs border rounded p-1">
+                                        <option>Top 10</option>
+                                        <option>Todas</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tienda</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Volumen</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Cumplimiento</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">T. Promedio</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Calidad</th>
+                                            <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Tendencia</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="store-performance" class="bg-white divide-y divide-gray-200">
+                                        <!-- Se llenará dinámicamente -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Panel de alertas -->
+                        <div class="bg-white rounded-lg shadow-sm p-4 mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-sm font-semibold text-gray-800">Alertas y Acciones</h3>
+                                <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">3 Nuevas</span>
+                            </div>
+                            <div id="alerts-container" class="space-y-2">
+                                <!-- Se llenará dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
                 </main>
             </div>
 
@@ -255,37 +374,6 @@
                     <div class="mt-6 flex justify-end space-x-4">
                         <button id="modal-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancelar</button>
                         <button id="modal-save-btn" class="px-4 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>Guardar</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Modal para Editar Materiales -->
-            <div id="edit-materials-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-                <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="text-lg font-bold text-gray-800">Editar Materiales del Envío</h3>
-                        <button id="edit-materials-close-btn" class="text-gray-400 hover:text-gray-600">
-                            <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
-                    </div>
-                    
-                    <div class="mb-4">
-                        <h4 class="font-semibold text-gray-700 mb-2">Materiales del Envío</h4>
-                        <div id="current-materials-list" class="space-y-3 mb-4"></div>
-                        
-                        <button type="button" id="add-new-material-btn" class="w-full text-sm text-red-600 font-semibold hover:text-red-800 flex items-center justify-center py-2 border-2 border-dashed border-red-300 rounded-lg hover:border-red-400 transition-colors">
-                            <svg class="w-5 h-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-                            Añadir Nuevo Material
-                        </button>
-                    </div>
-                    
-                    <div class="mt-6 flex justify-end space-x-4">
-                        <button id="edit-materials-cancel-btn" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">Cancelar</button>
-                        <button id="edit-materials-save-btn" class="px-4 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600">Guardar Cambios</button>
                     </div>
                 </div>
             </div>
@@ -373,153 +461,26 @@
             appState.userRole = 'cedi';
             navigate('list');
         });
-        document.getElementById('role-reports-btn').addEventListener('click', () => {
-            appState.userRole = 'reports';
-            navigate('dashboard');
-        });
         document.getElementById('back-to-roles-from-create').addEventListener('click', () => navigate('roleSelection'));
         document.getElementById('back-to-roles-from-list').addEventListener('click', () => navigate('roleSelection'));
-        document.getElementById('back-to-list-from-dash').addEventListener('click', () => {
-            if (appState.userRole === 'reports') {
-                navigate('roleSelection');
-            } else {
-                navigate('list');
-            }
-        });
 
         // --- Lógica de Creación de Envío ---
         const createShipmentForm = document.getElementById('create-shipment-form');
         const cediSelect = document.getElementById('cedi-select');
         const storeSelect = document.getElementById('store-select');
         const materialsContainer = document.getElementById('materials-container');
-        // Modificar el storeData para incluir el CEDI como tienda
-        const storeData = { "98001": [
-            { code: "CEDI", name: "CEDI Cúcuta" },
-            { code: "060", name: "Ara Villa del Rosario" },
-            { code: "086", name: "Cúcuta Los Ángeles" },
-            { code: "127", name: "Cúcuta Guaimaral" }
-        ] };
+        const storeData = { "98001": [{ code: "060", name: "Ara Villa del Rosario" }, { code: "086", name: "Cúcuta Los Ángeles" }, { code: "127", name: "Cúcuta Guaimaral" }] };
 
-        // Implementación alternativa con búsqueda nativa
-        let storeChoices = null;
         cediSelect.addEventListener('change', () => {
             const cediCode = cediSelect.value;
-            
-            // Crear un contenedor personalizado para el select
-            const storeSelectContainer = document.getElementById('store-select-container');
-            if (storeSelectContainer) {
-                storeSelectContainer.remove();
-            }
-            
+            storeSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
             if (cediCode && storeData[cediCode]) {
-                // Crear el nuevo contenedor
-                const newContainer = document.createElement('div');
-                newContainer.id = 'store-select-container';
-                newContainer.className = 'relative';
-                
-                // Crear el input de búsqueda
-                const searchInput = document.createElement('input');
-                searchInput.type = 'text';
-                searchInput.placeholder = 'Buscar tienda...';
-                searchInput.className = 'w-full p-2 border border-gray-300 rounded-md shadow-sm mb-2';
-                searchInput.id = 'store-search-input';
-                
-                // Crear el select original (oculto)
-                const hiddenSelect = document.createElement('select');
-                hiddenSelect.id = 'store-select-hidden';
-                hiddenSelect.className = 'hidden';
-                hiddenSelect.innerHTML = '<option value="">-- Seleccionar --</option>';
-                
-                // Crear la lista de opciones
-                const optionsList = document.createElement('div');
-                optionsList.id = 'store-options-list';
-                optionsList.className = 'absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto hidden';
-                
-                // Agregar opciones
-                storeData[cediCode].forEach(store => {
-                    const option = document.createElement('option');
-                    option.value = store.code;
-                    option.textContent = `${store.code} - ${store.name}`;
-                    hiddenSelect.appendChild(option);
-                    
-                    const listItem = document.createElement('div');
-                    listItem.className = 'p-2 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0';
-                    listItem.textContent = `${store.code} - ${store.name}`;
-                    listItem.dataset.value = store.code;
-                    optionsList.appendChild(listItem);
-                });
-                
-                // Agregar elementos al contenedor
-                newContainer.appendChild(searchInput);
-                newContainer.appendChild(hiddenSelect);
-                newContainer.appendChild(optionsList);
-                
-                // Reemplazar el select original
-                storeSelect.parentNode.insertBefore(newContainer, storeSelect);
-                storeSelect.style.display = 'none';
-                
-                // Funcionalidad de búsqueda
-                searchInput.addEventListener('input', (e) => {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const items = optionsList.querySelectorAll('div');
-                    
-                    items.forEach(item => {
-                        const text = item.textContent.toLowerCase();
-                        if (text.includes(searchTerm)) {
-                            item.style.display = 'block';
-                        } else {
-                            item.style.display = 'none';
-                        }
-                    });
-                    
-                    if (searchTerm) {
-                        optionsList.classList.remove('hidden');
-                    } else {
-                        optionsList.classList.add('hidden');
-                    }
-                });
-                
-                // Mostrar/ocultar lista al hacer focus
-                searchInput.addEventListener('focus', () => {
-                    optionsList.classList.remove('hidden');
-                });
-                
-                // Seleccionar opción
-                optionsList.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('cursor-pointer')) {
-                        const value = e.target.dataset.value;
-                        const text = e.target.textContent;
-                        
-                        searchInput.value = text;
-                        hiddenSelect.value = value;
-                        optionsList.classList.add('hidden');
-                        
-                        // Trigger change event
-                        const event = new Event('change', { bubbles: true });
-                        hiddenSelect.dispatchEvent(event);
-                    }
-                });
-                
-                // Ocultar lista al hacer click fuera
-                document.addEventListener('click', (e) => {
-                    if (!newContainer.contains(e.target)) {
-                        optionsList.classList.add('hidden');
-                    }
-                });
-                
-                // Habilitar el select
+                storeData[cediCode].forEach(store => storeSelect.innerHTML += `<option value="${store.code}">${store.code} - ${store.name}</option>`);
                 storeSelect.disabled = false;
                 storeSelect.classList.remove('bg-gray-100');
             } else {
                 storeSelect.disabled = true;
                 storeSelect.classList.add('bg-gray-100');
-                storeSelect.style.display = 'block';
-                
-                // Limpiar contenedor personalizado si existe
-                const container = document.getElementById('store-select-container');
-                if (container) {
-                    container.remove();
-                }
             }
         });
         
@@ -556,7 +517,7 @@
         createShipmentForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const cediCode = cediSelect.value;
-            const storeCode = document.getElementById('store-select-hidden')?.value || storeSelect.value;
+            const storeCode = storeSelect.value;
             const vehiclePlate = document.getElementById('vehicle-plate').value.toUpperCase();
             const driverPhone = document.getElementById('driver-phone').value;
 
@@ -578,12 +539,9 @@
             const querySnapshot = await getDocs(q);
             const shipmentId = `REC-${storeCode}-${(querySnapshot.size + 1).toString().padStart(4, '0')}`;
 
-            // Lógica especial: si la tienda es CEDI, el estado inicial es 'en-pesaje', si no, 'en-transito'
-            let initialStatus = (storeCode === 'CEDI') ? 'en-pesaje' : 'en-transito';
-
             const shipmentData = {
                 id: shipmentId, cediCode, storeCode, vehiclePlate, driverPhone, materials,
-                status: initialStatus,
+                status: 'en-tienda',
                 dispatchTimestamp: Timestamp.fromDate(new Date()),
             };
 
@@ -594,7 +552,6 @@
                 materialsContainer.innerHTML = '';
                 storeSelect.disabled = true;
                 storeSelect.classList.add('bg-gray-100');
-                if (storeChoices) storeChoices.destroy();
             } catch (error) {
                 console.error("Error al crear envío: ", error);
                 alert("Hubo un error al crear el envío.");
@@ -691,7 +648,7 @@
                                     ${item.hasIncident ? 'Reportado' : 'Reportar'}
                                 </button>
                                 ${item.hasIncident ? `
-                                    <button class="view-incident-btn text-xs whitespace-nowrap bg-purple-500 text-white font-bold py-1.5 px-2 rounded-lg hover:bg-purple-600" data-index="${index}" data-material-name="${item.name}">
+                                    <button class="view-incident-btn text-xs whitespace-nowrap bg-blue-500 text-white font-bold py-1.5 px-2 rounded-lg hover:bg-blue-600" data-index="${index}" data-material-name="${item.name}">
                                         Ver Novedad
                                     </button>
                                 ` : ''}
@@ -707,17 +664,6 @@
                 <div class="flex items-center"><div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-4 flex-shrink-0"><svg class="h-6 w-6 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg></div><div class="flex-grow"><p class="text-sm text-gray-500">Fecha y Hora de Envío</p><p class="font-semibold text-gray-800">${shipment.dispatchTimestamp ? new Date(shipment.dispatchTimestamp.seconds * 1000).toLocaleString('es-CO') : 'N/A'}</p></div></div>`;
 
             updateMainActionButton();
-            // Permitir editar información en recepción
-            if (isReceiving) {
-                detailsContainer.innerHTML += `
-                    <button id="edit-shipment-btn" class="mt-4 w-full bg-green-500 text-white font-bold py-2 rounded-lg hover:bg-green-600">Editar Materiales</button>
-                `;
-                setTimeout(() => {
-                    document.getElementById('edit-shipment-btn').addEventListener('click', () => {
-                        openEditMaterialsModal();
-                    });
-                }, 100);
-            }
         }
 
         function updateMainActionButton() {
@@ -935,91 +881,6 @@
             appState.currentIncident = { materialName: null, materialIndex: null, isViewing: false };
         }
 
-        function openEditMaterialsModal() {
-            const shipment = appState.selectedShipmentData;
-            if (!shipment) return;
-
-            const currentMaterialsList = document.getElementById('current-materials-list');
-            currentMaterialsList.innerHTML = '';
-
-            // Renderizar materiales actuales
-            shipment.materials.forEach((material, index) => {
-                const materialDiv = document.createElement('div');
-                materialDiv.className = 'flex items-center space-x-2 p-3 border rounded-lg bg-gray-50';
-                materialDiv.innerHTML = `
-                    <div class="flex-grow">
-                        <select class="material-name-select w-full p-2 border rounded-md mb-2" name="materialName">
-                            <option value="">Tipo de material</option>
-                            <optgroup label="Aprovechable">
-                                <option value="Plástico" ${material.name === 'Plástico' ? 'selected' : ''}>Plástico</option>
-                                <option value="Cartón" ${material.name === 'Cartón' ? 'selected' : ''}>Cartón</option>
-                            </optgroup>
-                            <optgroup label="No Aprovechable">
-                                <option value="Icopor" ${material.name === 'Icopor' ? 'selected' : ''}>Icopor</option>
-                                <option value="Vidrio" ${material.name === 'Vidrio' ? 'selected' : ''}>Vidrio</option>
-                                <option value="Orgánico" ${material.name === 'Orgánico' ? 'selected' : ''}>Orgánico</option>
-                            </optgroup>
-                        </select>
-                        <div class="flex space-x-2">
-                            <input type="number" name="quantity" class="flex-1 p-2 border rounded-md" placeholder="Cant." value="${material.quantity || ''}">
-                            <select class="material-unit-select w-24 p-2 border rounded-md" name="materialUnit">
-                                <option value="Pacas" ${material.unit === 'Pacas' ? 'selected' : ''}>Pacas</option>
-                                <option value="Unidades" ${material.unit === 'Unidades' ? 'selected' : ''}>Unidades</option>
-                                <option value="Rollos" ${material.unit === 'Rollos' ? 'selected' : ''}>Rollos</option>
-                            </select>
-                        </div>
-                    </div>
-                    <button type="button" class="text-red-500 hover:text-red-700 delete-material-btn" data-index="${index}">
-                        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="m15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                        </svg>
-                    </button>
-                `;
-                currentMaterialsList.appendChild(materialDiv);
-            });
-
-            // Mostrar modal
-            document.getElementById('edit-materials-modal').classList.remove('hidden');
-        }
-
-        function closeEditMaterialsModal() {
-            document.getElementById('edit-materials-modal').classList.add('hidden');
-        }
-
-        async function saveMaterialsChanges() {
-            const shipment = appState.selectedShipmentData;
-            if (!shipment) return;
-
-            const currentMaterialsList = document.getElementById('current-materials-list');
-            const materialDivs = currentMaterialsList.querySelectorAll('.flex.items-center.space-x-2');
-            
-            const updatedMaterials = Array.from(materialDivs).map(div => ({
-                name: div.querySelector('select[name="materialName"]').value,
-                quantity: parseInt(div.querySelector('input[name="quantity"]').value),
-                unit: div.querySelector('select[name="materialUnit"]').value,
-                verified: false,
-                finalWeight: null,
-                hasIncident: false,
-                incidentId: null
-            })).filter(m => m.name && m.quantity && m.unit);
-
-            if (updatedMaterials.length === 0) {
-                alert("Debe mantener al menos un material.");
-                return;
-            }
-
-            try {
-                await updateDoc(doc(db, "shipments", shipment.id), { 
-                    materials: updatedMaterials
-                });
-                closeEditMaterialsModal();
-                alert("Materiales actualizados correctamente.");
-            } catch (error) {
-                console.error("Error al actualizar materiales:", error);
-                alert("Hubo un error al actualizar los materiales.");
-            }
-        }
-
         statusFilters.addEventListener('click', e => {
             if (e.target.classList.contains('status-filter-btn')) {
                 statusFilters.querySelectorAll('.status-filter-btn').forEach(btn => btn.classList.remove('bg-orange-500', 'text-white') || btn.classList.add('text-gray-600'));
@@ -1037,56 +898,6 @@
         document.getElementById('modal-save-btn').addEventListener('click', saveIncident);
         seedDataButton.addEventListener('click', seedDatabase);
         
-        // Event listeners para el modal de edición de materiales
-        document.getElementById('edit-materials-close-btn').addEventListener('click', closeEditMaterialsModal);
-        document.getElementById('edit-materials-cancel-btn').addEventListener('click', closeEditMaterialsModal);
-        document.getElementById('edit-materials-save-btn').addEventListener('click', saveMaterialsChanges);
-        
-        // Event listener para añadir nuevo material en el modal
-        document.getElementById('add-new-material-btn').addEventListener('click', () => {
-            const currentMaterialsList = document.getElementById('current-materials-list');
-            const newMaterialDiv = document.createElement('div');
-            const newIndex = currentMaterialsList.children.length;
-            newMaterialDiv.className = 'flex items-center space-x-2 p-3 border rounded-lg bg-yellow-50 border-yellow-200';
-            newMaterialDiv.innerHTML = `
-                <div class="flex-grow">
-                    <select class="material-name-select w-full p-2 border rounded-md mb-2" name="materialName">
-                        <option value="">Tipo de material</option>
-                        <optgroup label="Aprovechable">
-                            <option value="Plástico">Plástico</option>
-                            <option value="Cartón">Cartón</option>
-                        </optgroup>
-                        <optgroup label="No Aprovechable">
-                            <option value="Icopor">Icopor</option>
-                            <option value="Vidrio">Vidrio</option>
-                            <option value="Orgánico">Orgánico</option>
-                        </optgroup>
-                    </select>
-                    <div class="flex space-x-2">
-                        <input type="number" name="quantity" class="flex-1 p-2 border rounded-md" placeholder="Cant.">
-                        <select class="material-unit-select w-24 p-2 border rounded-md" name="materialUnit">
-                            <option value="Pacas">Pacas</option>
-                            <option value="Unidades">Unidades</option>
-                            <option value="Rollos">Rollos</option>
-                        </select>
-                    </div>
-                </div>
-                <button type="button" class="text-red-500 hover:text-red-700 delete-material-btn" data-index="${newIndex}">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                    </svg>
-                </button>
-            `;
-            currentMaterialsList.appendChild(newMaterialDiv);
-        });
-
-        // Event delegation para eliminar materiales
-        document.getElementById('current-materials-list').addEventListener('click', (e) => {
-            if (e.target.closest('.delete-material-btn')) {
-                e.target.closest('.flex.items-center.space-x-2').remove();
-            }
-        });
-        
         menuIcon.addEventListener('click', () => menuDropdown.classList.toggle('hidden'));
         document.addEventListener('click', e => { 
             if (!menuIcon.contains(e.target) && !menuDropdown.contains(e.target)) {
@@ -1096,76 +907,342 @@
         adminRoleButton.addEventListener('click', e => { e.preventDefault(); navigate('dashboard'); });
         backToListFromDash.addEventListener('click', () => navigate('list'));
 
-        function initializeDashboard() {
-            // Inicializar el selector de fechas personalizadas
-            const dateRangePicker = flatpickr("#date-range-picker", { 
+        async function initializeDashboard() {
+            // Configurar date picker
+            const dateRangePicker = document.getElementById('date-range-picker');
+            const periodSelect = document.getElementById('period-select');
+            
+            flatpickr(dateRangePicker, {
                 mode: "range",
-                dateFormat: "d/m/Y",
-                locale: "es",
-                placeholder: "Seleccione un rango de fechas",
-                onChange: function(selectedDates, dateStr, instance) {
+                maxDate: "today",
+                dateFormat: "Y-m-d",
+                onChange: function(selectedDates) {
                     if (selectedDates.length === 2) {
-                        updateDashboardWithCustomPeriod(selectedDates[0], selectedDates[1]);
+                        updateDashboardData(selectedDates[0], selectedDates[1]);
                     }
                 }
             });
-            
-            // Event listener para el selector de período
-            document.getElementById('period-select').addEventListener('change', function() {
-                const periodValue = this.value;
-                const dateRangePicker = document.getElementById('date-range-picker');
+
+            // Manejar cambios en el selector de período
+            periodSelect.addEventListener('change', function() {
+                const value = this.value;
+                dateRangePicker.classList.toggle('hidden', value !== 'custom');
                 
-                if (periodValue === 'custom') {
-                    dateRangePicker.classList.remove('hidden');
-                    dateRangePicker.focus();
-                } else {
-                    dateRangePicker.classList.add('hidden');
-                    // Aquí puedes agregar lógica para otros períodos predefinidos
-                    updateDashboardWithPredefinedPeriod(periodValue);
+                let startDate, endDate;
+                const now = new Date();
+                
+                switch(value) {
+                    case 'today':
+                        startDate = new Date(now.setHours(0,0,0,0));
+                        endDate = new Date(now.setHours(23,59,59,999));
+                        break;
+                    case 'week':
+                        startDate = new Date(now.setDate(now.getDate() - 7));
+                        endDate = new Date();
+                        break;
+                    case 'month':
+                        startDate = new Date(now.setMonth(now.getMonth() - 1));
+                        endDate = new Date();
+                        break;
+                    case 'quarter':
+                        startDate = new Date(now.setMonth(now.getMonth() - 3));
+                        endDate = new Date();
+                        break;
+                    case 'custom':
+                        return; // El date picker manejará esto
+                }
+                
+                if (startDate && endDate) {
+                    updateDashboardData(startDate, endDate);
+                }
+            });
+
+            // Iniciar con datos del último mes
+            periodSelect.value = 'month';
+            periodSelect.dispatchEvent(new Event('change'));
+        }
+
+        async function updateDashboardData(startDate, endDate) {
+            try {
+                const shipmentsQuery = query(
+                    collection(db, "shipments"),
+                    where("dispatchTimestamp", ">=", Timestamp.fromDate(startDate)),
+                    where("dispatchTimestamp", "<=", Timestamp.fromDate(endDate))
+                );
+                
+                const snapshot = await getDocs(shipmentsQuery);
+                const shipments = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                
+                // Calcular KPIs
+                const totalWeight = shipments.reduce((sum, shipment) => 
+                    sum + shipment.materials.reduce((matSum, mat) => matSum + (mat.finalWeight || 0), 0), 0);
+                
+                const completedShipments = shipments.filter(s => s.status === 'finalizado');
+                const completionRate = (completedShipments.length / shipments.length) * 100;
+                
+                const avgTimeInHours = calculateAverageProcessingTime(shipments);
+                const qualityRate = calculateQualityRate(shipments);
+                
+                // Actualizar KPIs
+                document.getElementById('total-weight').textContent = `${totalWeight.toFixed(1)} Tn`;
+                document.getElementById('completion-rate').textContent = `${completionRate.toFixed(1)}%`;
+                document.getElementById('avg-time').textContent = `${avgTimeInHours.toFixed(1)}h`;
+                document.getElementById('quality-rate').textContent = `${qualityRate.toFixed(1)}%`;
+                
+                // Actualizar gráficos
+                updateMaterialChart(shipments);
+                updateTrendChart(shipments);
+                updateStorePerformance(shipments);
+                updateAlerts(shipments);
+                
+            } catch (error) {
+                console.error("Error actualizando dashboard:", error);
+            }
+        }
+
+        function calculateAverageProcessingTime(shipments) {
+            const times = shipments
+                .filter(s => s.status === 'finalizado')
+                .map(s => {
+                    const start = s.dispatchTimestamp.seconds;
+                    const end = s.completionTimestamp?.seconds || start;
+                    return (end - start) / 3600; // Convertir a horas
+                });
+            return times.length ? times.reduce((a, b) => a + b) / times.length : 0;
+        }
+
+        function calculateQualityRate(shipments) {
+            const totalMaterials = shipments.reduce((sum, s) => sum + s.materials.length, 0);
+            const materialsWithIncidents = shipments.reduce((sum, s) => 
+                sum + s.materials.filter(m => m.hasIncident).length, 0);
+            return ((totalMaterials - materialsWithIncidents) / totalMaterials) * 100;
+        }
+
+        function updateMaterialChart(shipments) {
+            const materialData = {};
+            shipments.forEach(shipment => {
+                shipment.materials.forEach(material => {
+                    if (!materialData[material.name]) {
+                        materialData[material.name] = {
+                            weight: 0,
+                            count: 0,
+                            incidents: 0
+                        };
+                    }
+                    materialData[material.name].weight += material.finalWeight || 0;
+                    materialData[material.name].count += 1;
+                    if (material.hasIncident) materialData[material.name].incidents += 1;
+                });
+            });
+            
+            if (appState.charts.material) {
+                appState.charts.material.destroy();
+            }
+            
+            const labels = Object.keys(materialData);
+            const data = labels.map(label => materialData[label].weight);
+            
+            appState.charts.material = new Chart('material-chart', {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Toneladas',
+                        data,
+                        backgroundColor: [
+                            '#2dd4bf',
+                            '#fb923c',
+                            '#3b82f6',
+                            '#facc15',
+                            '#a855f7'
+                        ]
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateTrendChart(shipments) {
+            // Agrupar envíos por fecha
+            const dailyData = {};
+            shipments.forEach(shipment => {
+                const date = new Date(shipment.dispatchTimestamp.seconds * 1000).toLocaleDateString();
+                dailyData[date] = (dailyData[date] || 0) + 1;
+            });
+            
+            const labels = Object.keys(dailyData).sort();
+            const data = labels.map(date => dailyData[date]);
+            
+            if (appState.charts.trend) {
+                appState.charts.trend.destroy();
+            }
+            
+            appState.charts.trend = new Chart('trend-chart', {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Envíos',
+                        data,
+                        borderColor: '#2dd4bf',
+                        backgroundColor: 'rgba(45, 212, 191, 0.2)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        }
+
+        function updateStorePerformance(shipments) {
+            const storeData = {};
+            shipments.forEach(shipment => {
+                if (!storeData[shipment.storeCode]) {
+                    storeData[shipment.storeCode] = {
+                        totalWeight: 0,
+                        completedCount: 0,
+                        totalCount: 0,
+                        avgTime: 0,
+                        incidents: 0,
+                        totalMaterials: 0
+                    };
+                }
+                
+                const store = storeData[shipment.storeCode];
+                store.totalCount++;
+                if (shipment.status === 'finalizado') store.completedCount++;
+                
+                shipment.materials.forEach(material => {
+                    store.totalWeight += material.finalWeight || 0;
+                    store.totalMaterials++;
+                    if (material.hasIncident) store.incidents++;
+                });
+                
+                if (shipment.completionTimestamp) {
+                    store.avgTime += (shipment.completionTimestamp.seconds - shipment.dispatchTimestamp.seconds) / 3600;
                 }
             });
             
-            Object.values(appState.charts).forEach(chart => chart.destroy());
-            appState.charts.carton = new Chart('carton-chart', { type: 'bar', data: { labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'], datasets: [{ label: 'Tn', data: [186, 305, 237, 73, 209, 214], backgroundColor: '#2dd4bf' }] }, options: {plugins: { legend: {display: false}}}});
-            appState.charts.material = new Chart('material-chart', { type: 'bar', data: { labels: ['Cartón', 'Plástico', 'Zuncho', 'Otros'], datasets: [{ label: 'Tn', data: [520, 410, 350, 300], backgroundColor: ['#2dd4bf', '#fb923c', '#3b82f6', '#facc15'] }] }, options: { indexAxis: 'y', plugins: { legend: {display: false}}}});
-            appState.charts.city = new Chart('city-chart', { type: 'line', data: { labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'], datasets: [{ label: 'Cúcuta', data: [300, 450, 400, 350, 500, 550], borderColor: '#2dd4bf', backgroundColor: 'rgba(45, 212, 191, 0.2)', fill: true, tension: 0.4 }, { label: 'Gachancipá', data: [200, 300, 250, 400, 450, 400], borderColor: '#fb923c', backgroundColor: 'rgba(251, 146, 60, 0.2)', fill: true, tension: 0.4 }] }, options: { plugins: { legend: { position: 'bottom' }}}});
+            // Calcular promedios y ordenar por rendimiento
+            const storePerformance = Object.entries(storeData)
+                .map(([code, data]) => ({
+                    code,
+                    weight: data.totalWeight,
+                    completion: (data.completedCount / data.totalCount) * 100,
+                    avgTime: data.avgTime / data.completedCount,
+                    quality: ((data.totalMaterials - data.incidents) / data.totalMaterials) * 100
+                }))
+                .sort((a, b) => b.weight - a.weight);
+            
+            // Actualizar tabla
+            document.getElementById('store-performance').innerHTML = storePerformance
+                .slice(0, 10)
+                .map(store => `
+                    <tr>
+                        <td class="px-4 py-2 text-sm">Tienda ${store.code}</td>
+                        <td class="px-4 py-2 text-sm">${store.weight.toFixed(1)} Tn</td>
+                        <td class="px-4 py-2 text-sm">${store.completion.toFixed(1)}%</td>
+                        <td class="px-4 py-2 text-sm">${store.avgTime.toFixed(1)}h</td>
+                        <td class="px-4 py-2 text-sm">${store.quality.toFixed(1)}%</td>
+                        <td class="px-4 py-2">
+                            <span class="inline-block w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+                                <span class="block h-full bg-green-500" style="width: ${store.completion}%"></span>
+                            </span>
+                        </td>
+                    </tr>
+                `)
+                .join('');
         }
-        
-        function updateDashboardWithCustomPeriod(startDate, endDate) {
-            // Formatear las fechas para mostrar
-            const startFormatted = startDate.toLocaleDateString('es-CO');
-            const endFormatted = endDate.toLocaleDateString('es-CO');
+
+        function updateAlerts(shipments) {
+            const alerts = [];
             
-            // Actualizar el título del período
-            const periodTitle = document.querySelector('h3');
-            if (periodTitle) {
-                periodTitle.textContent = `Período Personalizado: ${startFormatted} - ${endFormatted}`;
+            // Alertas de tiempo excedido
+            const longRunningShipments = shipments
+                .filter(s => s.status !== 'finalizado' && 
+                    (Date.now()/1000 - s.dispatchTimestamp.seconds) > 24*3600);
+            if (longRunningShipments.length) {
+                alerts.push({
+                    type: 'warning',
+                    message: `${longRunningShipments.length} envíos exceden 24h sin finalizar`,
+                    action: 'Revisar'
+                });
             }
             
-            // Aquí puedes agregar la lógica para cargar datos del período seleccionado
-            console.log('Período personalizado seleccionado:', startFormatted, 'a', endFormatted);
+            // Alertas de calidad
+            const lowQualityStores = new Set();
+            shipments.forEach(s => {
+                const incidents = s.materials.filter(m => m.hasIncident).length;
+                if (incidents / s.materials.length > 0.2) {
+                    lowQualityStores.add(s.storeCode);
+                }
+            });
+            if (lowQualityStores.size) {
+                alerts.push({
+                    type: 'error',
+                    message: `${lowQualityStores.size} tiendas con alta tasa de incidencias`,
+                    action: 'Investigar'
+                });
+            }
             
-            // Ejemplo: Actualizar los gráficos con datos del período seleccionado
-            // updateChartsWithPeriodData(startDate, endDate);
+            // Actualizar panel de alertas
+            document.getElementById('alerts-container').innerHTML = alerts
+                .map(alert => `
+                    <div class="flex items-center justify-between p-2 bg-${alert.type === 'error' ? 'red' : 'yellow'}-50 rounded">
+                        <div class="flex items-center">
+                            <span class="w-2 h-2 bg-${alert.type === 'error' ? 'red' : 'yellow'}-500 rounded-full mr-2"></span>
+                            <span class="text-sm text-gray-700">${alert.message}</span>
+                        </div>
+                        <button class="text-xs bg-white px-2 py-1 rounded border hover:bg-gray-50">${alert.action}</button>
+                    </div>
+                `)
+                .join('');
         }
-        
-        function updateDashboardWithPredefinedPeriod(period) {
-            let periodTitle = '';
-            switch(period) {
-                case 'quarterly':
-                    periodTitle = 'Último Trimestre';
-                    break;
-                case 'semi-annually':
-                    periodTitle = 'Último Semestre';
-                    break;
-                default:
-                    periodTitle = 'Acumulado Enero-Marzo 2025';
-            }
+
+        function updateRecentShipmentsTable(shipments) {
+            const tbody = document.getElementById('recent-shipments');
+            const statusClasses = {
+                'en-tienda': 'bg-yellow-100 text-yellow-800',
+                'en-transito': 'bg-blue-100 text-blue-800',
+                'recibido': 'bg-green-100 text-green-800',
+                'en-pesaje': 'bg-purple-100 text-purple-800',
+                'finalizado': 'bg-gray-100 text-gray-800'
+            };
             
-            const titleElement = document.querySelector('h3');
-            if (titleElement) {
-                titleElement.textContent = periodTitle;
-            }
+            tbody.innerHTML = shipments
+                .sort((a, b) => b.dispatchTimestamp.seconds - a.dispatchTimestamp.seconds)
+                .slice(0, 10)
+                .map(shipment => {
+                    const totalWeight = shipment.materials
+                        .reduce((sum, mat) => sum + (mat.finalWeight || 0), 0)
+                        .toFixed(2);
+                    
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${shipment.id}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Tienda ${shipment.storeCode}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${statusClasses[shipment.status]}">
+                                    ${shipment.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${new Date(shipment.dispatchTimestamp.seconds * 1000).toLocaleString()}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${totalWeight} Tn</td>
+                        </tr>
+                    `;
+                })
+                .join('');
         }
 
         async function seedDatabase() {
