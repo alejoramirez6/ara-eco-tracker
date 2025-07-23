@@ -93,60 +93,6 @@
         #store-options-list div:active {
             background-color: #e5e7eb;
         }
-        .material-row {
-            display: flex;
-            gap: 0.5rem;
-            align-items: center;
-            margin-bottom: 0.25rem;
-        }
-        .material-row select, .material-row input {
-            min-width: 0;
-            font-size: 0.95rem;
-            padding: 0.25rem 0.5rem;
-            height: 2.1rem;
-        }
-        .material-row .material-category-select, .material-row .material-name-select {
-            width: 7.5rem;
-            max-width: 40vw;
-        }
-        .material-row .material-unit-select {
-            width: 6rem;
-        }
-        .material-row .w-20 {
-            width: 3.5rem;
-        }
-        .material-row button {
-            margin-left: 0.2rem;
-        }
-        #add-material-btn {
-            margin-top: 0.2rem;
-            font-size: 0.95rem;
-            padding: 0.3rem 0.7rem;
-            min-height: unset;
-        }
-        .space-y-3 > * + * {
-            margin-top: 0.25rem !important;
-        }
-        .space-y-6 > * + * {
-            margin-top: 1rem !important;
-        }
-        .block.text-sm.font-medium {
-            font-size: 0.95rem;
-            margin-bottom: 0.2rem;
-        }
-        .text-sm.font-medium.text-gray-700.mb-2 {
-            margin-bottom: 0.3rem;
-        }
-        .p-6 {
-            padding: 1.2rem !important;
-        }
-        .py-4 {
-            padding-top: 0.8rem !important;
-            padding-bottom: 0.8rem !important;
-        }
-        .rounded-xl {
-            border-radius: 1rem !important;
-        }
     </style>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
@@ -581,19 +527,22 @@
             const materialId = `material-${Date.now()}`;
             const materialDiv = document.createElement('div');
             materialDiv.id = materialId;
-            materialDiv.className = 'material-row';
+            materialDiv.className = 'flex items-center space-x-2 p-2 border rounded-md';
             materialDiv.innerHTML = `
-                <select class="material-category-select" name="materialCategory">
-                    <option value="">Categoría</option>
-                    <option value="Aprovechable">Aprovechable</option>
-                    <option value="No Aprovechable">No Aprovechable</option>
-                    <option value="Peligroso">Peligroso</option>
-                </select>
-                <select class="material-name-select" name="materialName" disabled>
+                <select class="material-name-select flex-grow p-1 border-r" name="materialName">
                     <option value="">Tipo de material</option>
+                    <optgroup label="Aprovechable">
+                        <option value="Plástico">Plástico</option>
+                        <option value="Cartón">Cartón</option>
+                    </optgroup>
+                    <optgroup label="No Aprovechable">
+                        <option value="Icopor">Icopor</option>
+                        <option value="Vidrio">Vidrio</option>
+                        <option value="Orgánico">Orgánico</option>
+                    </optgroup>
                 </select>
-                <input type="number" name="quantity" class="w-20" placeholder="Cant.">
-                <select class="material-unit-select" name="materialUnit">
+                <input type="number" name="quantity" class="w-20 p-1" placeholder="Cant.">
+                 <select class="material-unit-select w-24 p-1 border-l" name="materialUnit">
                     <option value="Pacas">Pacas</option>
                     <option value="Unidades">Unidades</option>
                     <option value="Rollos">Rollos</option>
@@ -602,23 +551,6 @@
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>
                 </button>`;
             materialsContainer.appendChild(materialDiv);
-
-            // Lógica dependiente para el select de material
-            const categorySelect = materialDiv.querySelector('.material-category-select');
-            const nameSelect = materialDiv.querySelector('.material-name-select');
-            categorySelect.addEventListener('change', function() {
-                nameSelect.innerHTML = '<option value="">Tipo de material</option>';
-                nameSelect.disabled = false;
-                if (this.value === 'Aprovechable') {
-                    nameSelect.innerHTML += '<option value="Plástico">Plástico</option><option value="Cartón">Cartón</option>';
-                } else if (this.value === 'No Aprovechable') {
-                    nameSelect.innerHTML += '<option value="Icopor">Icopor</option><option value="Vidrio">Vidrio</option><option value="Orgánico">Orgánico</option>';
-                } else if (this.value === 'Peligroso') {
-                    nameSelect.innerHTML += '<option value="Corrosivo">Corrosivo</option><option value="Reactivo">Reactivo</option><option value="Explosivo">Explosivo</option><option value="Tóxico">Tóxico</option><option value="Inflamable">Inflamable</option><option value="Infeccioso">Infeccioso</option><option value="Radioactivo">Radioactivo</option>';
-                } else {
-                    nameSelect.disabled = true;
-                }
-            });
         });
 
         createShipmentForm.addEventListener('submit', async (e) => {
@@ -1014,21 +946,19 @@
             shipment.materials.forEach((material, index) => {
                 const materialDiv = document.createElement('div');
                 materialDiv.className = 'flex items-center space-x-2 p-3 border rounded-lg bg-gray-50';
-                // Detectar categoría
-                let categoria = '';
-                if (["Plástico","Cartón"].includes(material.name)) categoria = 'Aprovechable';
-                else if (["Icopor","Vidrio","Orgánico"].includes(material.name)) categoria = 'No Aprovechable';
-                else categoria = 'Peligroso';
                 materialDiv.innerHTML = `
                     <div class="flex-grow">
-                        <select class="material-category-select w-full p-2 border rounded-md mb-2" name="materialCategory">
-                            <option value="">Categoría</option>
-                            <option value="Aprovechable" ${categoria==='Aprovechable'?'selected':''}>Aprovechable</option>
-                            <option value="No Aprovechable" ${categoria==='No Aprovechable'?'selected':''}>No Aprovechable</option>
-                            <option value="Peligroso" ${categoria==='Peligroso'?'selected':''}>Peligroso</option>
-                        </select>
                         <select class="material-name-select w-full p-2 border rounded-md mb-2" name="materialName">
                             <option value="">Tipo de material</option>
+                            <optgroup label="Aprovechable">
+                                <option value="Plástico" ${material.name === 'Plástico' ? 'selected' : ''}>Plástico</option>
+                                <option value="Cartón" ${material.name === 'Cartón' ? 'selected' : ''}>Cartón</option>
+                            </optgroup>
+                            <optgroup label="No Aprovechable">
+                                <option value="Icopor" ${material.name === 'Icopor' ? 'selected' : ''}>Icopor</option>
+                                <option value="Vidrio" ${material.name === 'Vidrio' ? 'selected' : ''}>Vidrio</option>
+                                <option value="Orgánico" ${material.name === 'Orgánico' ? 'selected' : ''}>Orgánico</option>
+                            </optgroup>
                         </select>
                         <div class="flex space-x-2">
                             <input type="number" name="quantity" class="flex-1 p-2 border rounded-md" placeholder="Cant." value="${material.quantity || ''}">
@@ -1046,25 +976,8 @@
                     </button>
                 `;
                 currentMaterialsList.appendChild(materialDiv);
-                // Lógica dependiente para el select de material en edición
-                const categorySelect = materialDiv.querySelector('.material-category-select');
-                const nameSelect = materialDiv.querySelector('.material-name-select');
-                function setMaterialOptionsEdit(cat) {
-                    nameSelect.innerHTML = '<option value="">Tipo de material</option>';
-                    if (cat === 'Aprovechable') {
-                        nameSelect.innerHTML += '<option value="Plástico">Plástico</option><option value="Cartón">Cartón</option>';
-                    } else if (cat === 'No Aprovechable') {
-                        nameSelect.innerHTML += '<option value="Icopor">Icopor</option><option value="Vidrio">Vidrio</option><option value="Orgánico">Orgánico</option>';
-                    } else if (cat === 'Peligroso') {
-                        nameSelect.innerHTML += '<option value="Corrosivo">Corrosivo</option><option value="Reactivo">Reactivo</option><option value="Explosivo">Explosivo</option><option value="Tóxico">Tóxico</option><option value="Inflamable">Inflamable</option><option value="Infeccioso">Infeccioso</option><option value="Radioactivo">Radioactivo</option>';
-                    }
-                }
-                setMaterialOptionsEdit(categoria);
-                nameSelect.value = material.name;
-                categorySelect.addEventListener('change', function() {
-                    setMaterialOptionsEdit(this.value);
-                });
             });
+
             // Mostrar modal
             document.getElementById('edit-materials-modal').classList.remove('hidden');
         }
